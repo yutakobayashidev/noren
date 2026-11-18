@@ -236,7 +236,12 @@ export function PostCard({
               onClick={() => action("repost")}
               aria-label={post.reposted ? t("Undo repost") : t("Repost")}
               aria-pressed={!!post.reposted}
-              disabled={!!busy || post.readOnly || post.accountId === "guest"}
+              disabled={
+                post.platform === "nostr" ||
+                !!busy ||
+                post.readOnly ||
+                post.accountId === "guest"
+              }
               className={post.reposted ? "reposted" : ""}
             >
               {busy === "repost" ? (
@@ -250,7 +255,12 @@ export function PostCard({
               onClick={() => action("like")}
               aria-label={post.liked ? t("Unlike") : t("Like")}
               aria-pressed={!!post.liked}
-              disabled={!!busy || post.readOnly || post.accountId === "guest"}
+              disabled={
+                post.platform === "nostr" ||
+                !!busy ||
+                post.readOnly ||
+                post.accountId === "guest"
+              }
               className={post.liked ? "liked" : ""}
             >
               {busy === "like" ? (

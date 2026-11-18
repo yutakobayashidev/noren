@@ -1,3 +1,4 @@
+import { connectNostr } from "../../lib/nostr";
 import { t } from "../../lib/i18n";
 import { useState, useEffect } from "react";
 import { Plus, LogOut, LoaderCircle, Check, ArrowLeft } from "lucide-react";
@@ -72,7 +73,8 @@ export function AccountsDialog({
         window.location.assign(url);
         return;
       }
-      await api("/api/accounts", { platform, ...values });
+      if (platform === "nostr") await connectNostr();
+      else await api("/api/accounts", { platform, ...values });
       onChange();
       setPlatform(null);
     } catch (e) {
@@ -137,24 +139,22 @@ export function AccountsDialog({
               </div>
             ))}
             <div className="grid gap-2">
-              {(["mastodon", "bluesky", "twitter", "misskey"] as const).map(
-                (p) => (
-                  <button
-                    key={p}
-                    onClick={() => {
-                      setError("");
-                      setPlatform(p);
-                    }}
-                    className="flex items-center gap-3 rounded-2xl bg-muted px-4 py-4 text-left hover:bg-accent"
-                  >
-                    <PlatformIcon platform={p} size={24} />
-                    <span className="flex-1 font-medium">
-                      {platformNames[p]}
-                    </span>
-                    <Plus size={18} />
-                  </button>
-                ),
-              )}
+              {(
+                ["mastodon", "bluesky", "twitter", "misskey", "nostr"] as const
+              ).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => {
+                    setError("");
+                    setPlatform(p);
+                  }}
+                  className="flex items-center gap-3 rounded-2xl bg-muted px-4 py-4 text-left hover:bg-accent"
+                >
+                  <PlatformIcon platform={p} size={24} />
+                  <span className="flex-1 font-medium">{platformNames[p]}</span>
+                  <Plus size={18} />
+                </button>
+              ))}
             </div>
           </div>
         ) : (

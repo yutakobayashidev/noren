@@ -1,3 +1,10 @@
+import {
+  nostrRouter,
+  nostrFeed,
+  nostrThread,
+  publishNostr,
+  signedEvent,
+} from "./adapters/nostr";
 import { connectionRouter } from "./connections";
 import { Router } from "express";
 import {
@@ -88,6 +95,7 @@ export function apiRouter() {
     res.locals.store = store;
     next();
   });
+  router.use("/nostr", nostrRouter());
   router.use("/connect", connectionRouter());
   router.get("/accounts", (_req, res) =>
     res.json({ accounts: res.locals.store.public(), guest }),
@@ -201,6 +209,10 @@ export function apiRouter() {
       res.json(await misskeyFeed(account, source, cursor));
       return;
     }
+    if (account.platform === "nostr") {
+      res.json(await nostrFeed(account, source, cursor));
+      return;
+    }
     const page =
       account.platform === "twitter"
         ? await twitterFeed(account, source, cursor)
@@ -216,7 +228,7 @@ export function apiRouter() {
       res.json({ notifications: await misskeyNotifications(account) });
       return;
     }
-    if (account.platform === "twitter") {
+    if (account.platform === "twitter" || account.platform === "nostr") {
       res.json({ notifications: [], unsupported: true });
       return;
     }
@@ -232,6 +244,10 @@ export function apiRouter() {
     const store: AccountStore = res.locals.store;
     const account =
       input.accountId === "guest" ? guest : store.get(input.accountId);
+    if (account.platform === "nostr") {
+      res.json({ posts: await nostrThread(account, input.nativeId) });
+      return;
+    }
     if (account.platform === "misskey") {
       const params = { noteId: input.nativeId };
       const [ancestors, note, replies] = await Promise.all(
@@ -290,6 +306,8 @@ export function apiRouter() {
       .parse(req.body);
     const store: AccountStore = res.locals.store;
     const account = store.get(input.accountId);
+    if (account.platform === "nostr")
+      throw new Error("Nostr reactions are unavailable.");
     if (!account.canPost) throw new Error("This feed is read-only.");
     if (account.platform === "misskey") {
       const path = {
@@ -360,6 +378,7 @@ export function apiRouter() {
         accountIds: z.array(z.string()).min(1).max(10),
         text: z.string().trim().min(1).max(10000),
         reply: postSchema.optional(),
+        signedEvents: z.record(z.string(), signedEvent).optional(),
       })
       .parse(req.body);
     const store: AccountStore = res.locals.store;
@@ -373,6 +392,15 @@ export function apiRouter() {
       accounts.map(async (account) => {
         try {
           if (!account.canPost) throw new Error("This feed is read-only.");
+          if (account.platform === "nostr") {
+            await publishNostr(
+              account,
+              input.signedEvents?.[account.id],
+              input.text,
+              input.reply?.nativeId,
+            );
+            return { accountId: account.id, ok: true };
+          }
           const limit =
             account.platform === "bluesky"
               ? 300
@@ -429,6 +457,10 @@ export function apiRouter() {
   router.get("/lists", async (req, res) => {
     const store: AccountStore = res.locals.store;
     const account = store.get(z.string().parse(req.query.accountId));
+    if (account.platform === "nostr") {
+      res.json({ lists: [] });
+      return;
+    }
     if (account.platform === "mastodon") {
       const { data } = await mastodonRequest(account, "/api/v1/lists");
       res.json({ lists: data.map((l: any) => ({ id: l.id, title: l.title })) });

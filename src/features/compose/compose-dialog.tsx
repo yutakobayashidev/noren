@@ -1,3 +1,4 @@
+import { signNostr } from "../../lib/nostr";
 import { t } from "../../lib/i18n";
 import { useEffect, useState } from "react";
 import { Send, LoaderCircle, Globe, FileText } from "lucide-react";
@@ -62,9 +63,32 @@ export function ComposeDialog({
     setBusy(true);
     setError("");
     try {
+      const signedEvents = Object.fromEntries(
+        await Promise.all(
+          accounts
+            .filter((a) => selected.includes(a.id) && a.platform === "nostr")
+            .map(async (a) => [
+              a.id,
+              await signNostr(
+                {
+                  kind: 1,
+                  created_at: Math.floor(Date.now() / 1000),
+                  content: text.trim(),
+                  tags: reply
+                    ? [
+                        ["e", reply.nativeId, "", "reply"],
+                        ["p", reply.author.handle],
+                      ]
+                    : [],
+                },
+                a.handle,
+              ),
+            ]),
+        ),
+      );
       const { results } = await api<{ results: PublishResult[] }>(
         "/api/publish",
-        { accountIds: selected, text, reply },
+        { accountIds: selected, text, reply, signedEvents },
       );
       const failed = results.filter((r) => !r.ok);
       if (failed.length) {
