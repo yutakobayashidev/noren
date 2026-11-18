@@ -2,16 +2,21 @@
   "name": "flare-web",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "license": "AGPL-3.0-only",
+  "type": "module",
   "scripts": {
-    "dev": "tsx watch server/index.ts",
-    "build": "tsc --noEmit && vite build",
+    "dev": "pnpm site:build && tsx watch server/index.ts",
+    "build": "tsc --noEmit && vite build && pnpm site:build",
     "start": "NODE_ENV=production tsx server/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "vp test run",
     "test:e2e": "playwright test",
-    "format": "prettier --write src server tests scripts *.ts *.json *.yaml README.md docs/*.md"
+    "format": "vp fmt src server tests packages apps/site/astro.config.mjs apps/site/package.json vite.config.ts vitest.config.ts playwright.config.ts tsconfig.json package.json && prettier --plugin prettier-plugin-astro --write \"apps/site/src/**/*.astro\"",
+    "site:dev": "pnpm --filter @flare/site dev",
+    "site:build": "FLARE_EMBED_SITE=1 pnpm --filter @flare/site build",
+    "lint": "vp lint --deny-warnings src server tests packages apps/site vite.config.ts vitest.config.ts playwright.config.ts",
+    "format:check": "vp fmt --check src server tests packages apps/site/astro.config.mjs apps/site/package.json vite.config.ts vitest.config.ts playwright.config.ts tsconfig.json package.json && prettier --plugin prettier-plugin-astro --check \"apps/site/src/**/*.astro\"",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
   },
   "dependencies": {
     "@atproto/api": "^0.18.0",
@@ -45,10 +50,12 @@
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^5.0.0",
     "prettier": "^3.10.1",
+    "prettier-plugin-astro": "^1.1.2",
     "tailwindcss": "^4.1.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
-    "vite": "^7.1.0"
+    "vite": "^7.1.0",
+    "vite-plus": "^1.7.0"
   },
   "engines": {
     "node": ">=22.12.0"

@@ -13,13 +13,9 @@ function normalizePost(post: Post, includeQuote: boolean): ResearchPost {
     author: {
       name: post.author.name,
       handle: post.author.username,
-      ...(post.author.profileImageUrl
-        ? { avatarUrl: post.author.profileImageUrl }
-        : {}),
+      ...(post.author.profileImageUrl ? { avatarUrl: post.author.profileImageUrl } : {}),
     },
-    ...(Number.isFinite(timestamp)
-      ? { createdAt: new Date(timestamp).toISOString() }
-      : {}),
+    ...(Number.isFinite(timestamp) ? { createdAt: new Date(timestamp).toISOString() } : {}),
     ...(post.media?.length
       ? {
           media: post.media.map((item) =>
@@ -29,10 +25,7 @@ function normalizePost(post: Post, includeQuote: boolean): ResearchPost {
                   url: item.previewUrl ?? item.url,
                 }
               : {
-                  type:
-                    item.type === "animated_gif"
-                      ? ("gif" as const)
-                      : ("video" as const),
+                  type: item.type === "animated_gif" ? ("gif" as const) : ("video" as const),
                   url: item.videoUrl,
                   previewUrl: item.previewUrl ?? item.url,
                 },

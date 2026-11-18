@@ -9,3 +9,5 @@ playwright-report/
 .playwright-mcp/
 .gradle/
 **/build/
+.astro/
+${XDG_CACHE_HOME}/

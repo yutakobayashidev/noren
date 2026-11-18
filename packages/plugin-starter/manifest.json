@@ -1,0 +1,7 @@
+{
+  "id": "example.quote",
+  "name": "Markdown quote",
+  "author": "Flare Web",
+  "apiVersion": 1,
+  "entry": "./action.js"
+}

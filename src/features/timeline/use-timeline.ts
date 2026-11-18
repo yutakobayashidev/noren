@@ -3,11 +3,7 @@ import type { FeedSource, SocialPost, FeedPage } from "../../domain/model";
 import { mergePosts, postIdentity } from "../../domain/model";
 import { api, errorMessage } from "../../lib/api";
 type AccountPage = { cursor?: string; done: boolean; error?: string };
-export function useTimeline(
-  accountIds: string[],
-  source: FeedSource,
-  refresh: number,
-) {
+export function useTimeline(accountIds: string[], source: FeedSource, refresh: number) {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [pages, setPages] = useState<Record<string, AccountPage>>({});
   const [loading, setLoading] = useState(false);
@@ -30,9 +26,7 @@ export function useTimeline(
       if (!current) return;
       lock.current = true;
       setLoading(true);
-      const ids = accountIds.filter(
-        (id) => reset || !pagesRef.current[id]?.done,
-      );
+      const ids = accountIds.filter((id) => reset || !pagesRef.current[id]?.done);
       const results = await Promise.all(
         ids.map(async (id) => {
           try {
@@ -80,9 +74,7 @@ export function useTimeline(
     };
   }, [load]);
   const update = (post: SocialPost) =>
-    setPosts((old) =>
-      old.map((p) => (postIdentity(p) === postIdentity(post) ? post : p)),
-    );
+    setPosts((old) => old.map((p) => (postIdentity(p) === postIdentity(post) ? post : p)));
   return {
     posts,
     loading,

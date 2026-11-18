@@ -48,9 +48,7 @@ export function Timeline({
       {feed.errors.map((error) => (
         <div role="alert" className="feed-error" key={error.id}>
           <div>
-            <strong>
-              {accounts.find((a) => a.id === error.id)?.displayName}
-            </strong>
+            <strong>{accounts.find((a) => a.id === error.id)?.displayName}</strong>
             <p>{error.message}</p>
           </div>
           <Button
@@ -72,9 +70,7 @@ export function Timeline({
             onUpdate={feed.update}
             compact={layout === "compact"}
             {...interactions}
-            saved={interactions.saved.some(
-              (p) => postIdentity(p) === postIdentity(post),
-            )}
+            saved={interactions.saved.some((p) => postIdentity(p) === postIdentity(post))}
           />
         ))}
       </div>
@@ -93,18 +89,12 @@ export function Timeline({
       )}
       {feed.hasMore && !feed.errors.length ? (
         <div ref={sentinel} className="load-more">
-          <Button
-            variant="ghost"
-            disabled={feed.loading}
-            onClick={() => void feed.loadMore()}
-          >
+          <Button variant="ghost" disabled={feed.loading} onClick={() => void feed.loadMore()}>
             {t("Load more")}
           </Button>
         </div>
       ) : (
-        !!feed.posts.length && (
-          <p className="end-of-feed">{t("You’re all caught up")}</p>
-        )
+        !!feed.posts.length && <p className="end-of-feed">{t("You’re all caught up")}</p>
       )}
     </>
   );

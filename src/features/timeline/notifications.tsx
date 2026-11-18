@@ -1,13 +1,6 @@
 import { t } from "../../lib/i18n";
 import { useEffect, useState } from "react";
-import {
-  Bell,
-  Heart,
-  Repeat2,
-  UserPlus,
-  MessageCircle,
-  LoaderCircle,
-} from "lucide-react";
+import { Bell, Heart, Repeat2, UserPlus, MessageCircle, LoaderCircle } from "lucide-react";
 import type { Account, Notification, SocialPost } from "../../domain/model";
 import { api, errorMessage } from "../../lib/api";
 import { Avatar, PlatformIcon } from "../../components/platform";
@@ -20,9 +13,7 @@ export function Notifications({
   onThread: (post: SocialPost) => void;
   refresh: number;
 }) {
-  const [items, setItems] = useState<(Notification & { account: Account })[]>(
-    [],
-  );
+  const [items, setItems] = useState<(Notification & { account: Account })[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
@@ -90,26 +81,18 @@ export function Notifications({
               ? UserPlus
               : MessageCircle;
         return (
-          <article
-            className="notification-card"
-            key={`${item.account.id}:${item.id}`}
-          >
+          <article className="notification-card" key={`${item.account.id}:${item.id}`}>
             <Icon size={22} className="text-primary" />
             <div className="min-w-0 flex-1">
               <div className="mb-3 flex items-center gap-2">
-                <Avatar
-                  name={item.author.name}
-                  url={item.author.avatarUrl}
-                  size={32}
-                />
+                <Avatar name={item.author.name} url={item.author.avatarUrl} size={32} />
                 <PlatformIcon platform={item.account.platform} size={14} />
                 <time className="ml-auto text-xs text-muted-foreground">
                   {new Date(item.createdAt).toLocaleDateString()}
                 </time>
               </div>
               <p>
-                <strong>{item.author.name}</strong>{" "}
-                {labels[item.reason] || item.reason}
+                <strong>{item.author.name}</strong> {labels[item.reason] || item.reason}
               </p>
               {item.post && (
                 <button

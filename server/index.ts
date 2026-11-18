@@ -29,6 +29,7 @@ app.use(auth.sameOrigin);
 app.use("/auth", auth.router);
 app.use("/api", auth.requireAuth, apiRouter());
 app.use("/api", (_req, res) => res.status(404).json({ error: "Not found." }));
+app.use("/site", express.static(resolve("dist/site")));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(resolve("dist"), { index: false }));
   app.get("/{*path}", (_req, res) => res.sendFile(resolve("dist/index.html")));
@@ -45,29 +46,19 @@ if (process.env.NODE_ENV === "production") {
   app.use(vite.middlewares);
 }
 app.use(
-  (
-    error: unknown,
-    _req: express.Request,
-    res: express.Response,
-    _next: express.NextFunction,
-  ) => {
+  (error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (error instanceof ZodError) {
       res.status(400).json({ error: "Check the entered values." });
       return;
     }
-    const message =
-      error instanceof Error ? error.message : "Something went wrong.";
+    const message = error instanceof Error ? error.message : "Something went wrong.";
     // Never include upstream bodies, headers or credentials in logs/responses.
-    res
-      .status(error instanceof UpstreamError ? 502 : 400)
-      .json({ error: message.slice(0, 300) });
+    res.status(error instanceof UpstreamError ? 502 : 400).json({ error: message.slice(0, 300) });
   },
 );
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || "127.0.0.1";
-server.listen(port, host, () =>
-  console.log(`Flare Web listening at ${auth.origin.origin}`),
-);
+server.listen(port, host, () => console.log(`Flare Web listening at ${auth.origin.origin}`));
 function shutdown() {
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 5000).unref();

@@ -37,13 +37,8 @@ export async function publicOrigin(value: string) {
   )
     throw new Error("Enter an HTTPS server hostname without a path.");
   const host = url.hostname.replace(/^\[|\]$/g, "");
-  const addresses = isIP(host)
-    ? [{ address: host }]
-    : await lookup(host, { all: true });
-  if (
-    !addresses.length ||
-    addresses.some(({ address }) => !isPublicAddress(address))
-  )
+  const addresses = isIP(host) ? [{ address: host }] : await lookup(host, { all: true });
+  if (!addresses.length || addresses.some(({ address }) => !isPublicAddress(address)))
     throw new Error("Use a public social server.");
   return url.origin;
 }
@@ -79,10 +74,7 @@ export const publicLookup: typeof dnsLookup = ((
       callback(error);
       return;
     }
-    if (
-      !addresses.length ||
-      addresses.some((item) => !isPublicAddress(item.address))
-    ) {
+    if (!addresses.length || addresses.some((item) => !isPublicAddress(item.address))) {
       callback(new Error("Private network addresses are not allowed."));
       return;
     }
@@ -102,9 +94,7 @@ export const publicFetch: typeof fetch = async (input, init) => {
     throw new Error("Private network addresses are not allowed.");
   const headers = Object.fromEntries(request.headers);
   headers["accept-encoding"] = "identity";
-  const body = request.body
-    ? Buffer.from(await request.arrayBuffer())
-    : undefined;
+  const body = request.body ? Buffer.from(await request.arrayBuffer()) : undefined;
   return new Promise<Response>((resolve, reject) => {
     const outgoing = httpsRequest(
       url,
@@ -129,26 +119,17 @@ export const publicFetch: typeof fetch = async (input, init) => {
         incoming.on("end", () => {
           const status = incoming.statusCode || 502;
           if (status >= 300 && status < 400) {
-            reject(
-              new Error(
-                "The server redirected this request. Use its final HTTPS address.",
-              ),
-            );
+            reject(new Error("The server redirected this request. Use its final HTTPS address."));
             return;
           }
           const responseHeaders = new Headers();
           for (const [name, value] of Object.entries(incoming.headers)) {
             if (value !== undefined)
-              responseHeaders.set(
-                name,
-                Array.isArray(value) ? value.join(", ") : value,
-              );
+              responseHeaders.set(name, Array.isArray(value) ? value.join(", ") : value);
           }
           resolve(
             new Response(
-              [204, 205, 304].includes(status)
-                ? null
-                : new Uint8Array(Buffer.concat(chunks)),
+              [204, 205, 304].includes(status) ? null : new Uint8Array(Buffer.concat(chunks)),
               { status, headers: responseHeaders },
             ),
           );

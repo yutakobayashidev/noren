@@ -1,4 +1,4 @@
-import test from "node:test";
+import { test } from "vite-plus/test";
 import assert from "node:assert/strict";
 import express from "express";
 import { createServer, type Server } from "node:http";
@@ -11,9 +11,7 @@ import { createAuth } from "../server/auth";
 const listen = (server: Server) =>
   new Promise<string>((resolve) =>
     server.listen(0, "127.0.0.1", () =>
-      resolve(
-        `http://127.0.0.1:${(server.address() as { port: number }).port}`,
-      ),
+      resolve(`http://127.0.0.1:${(server.address() as { port: number }).port}`),
     ),
   );
 const close = (server: Server) =>
@@ -33,10 +31,7 @@ test("OIDC authorization code flow validates PKCE, state, nonce and session; gua
   provider.use(express.urlencoded({ extended: false }));
   const idp = createServer(provider);
   const issuer = await listen(idp);
-  const codes = new Map<
-    string,
-    { challenge: string; nonce: string; redirect: string }
-  >();
+  const codes = new Map<string, { challenge: string; nonce: string; redirect: string }>();
   let incorrectNonce = false;
   provider.get("/.well-known/openid-configuration", (_req, res) =>
     res.json({
@@ -114,16 +109,10 @@ test("OIDC authorization code flow validates PKCE, state, nonce and session; gua
   const auth = createAuth();
   app.use(auth.sameOrigin);
   app.use("/auth", auth.router);
-  app.get("/api/private", auth.requireAuth, (_req, res) =>
-    res.json(res.locals.identity),
-  );
+  app.get("/api/private", auth.requireAuth, (_req, res) => res.json(res.locals.identity));
   app.use(
-    (
-      _err: unknown,
-      _req: express.Request,
-      res: express.Response,
-      _next: express.NextFunction,
-    ) => res.status(400).json({ error: "Rejected" }),
+    (_err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) =>
+      res.status(400).json({ error: "Rejected" }),
   );
   const request = (url: string, cookie?: string) =>
     fetch(url, { redirect: "manual", headers: cookie ? { cookie } : {} });
@@ -144,10 +133,7 @@ test("OIDC authorization code flow validates PKCE, state, nonce and session; gua
     assert.equal((await request(altered.href, invalid.flow)).status, 400);
     incorrectNonce = true;
     const wrongNonce = await login();
-    assert.equal(
-      (await request(wrongNonce.callback, wrongNonce.flow)).status,
-      400,
-    );
+    assert.equal((await request(wrongNonce.callback, wrongNonce.flow)).status, 400);
     incorrectNonce = false;
     const valid = await login();
     const callback = await request(valid.callback, valid.flow);
@@ -166,10 +152,7 @@ test("OIDC authorization code flow validates PKCE, state, nonce and session; gua
     const identity = await request(origin + "/api/private", cookie);
     assert.equal(identity.status, 200);
     assert.equal((await identity.json()).sub, "test-user");
-    assert.equal(
-      (await request(origin + "/api/private", cookie + "corrupted")).status,
-      401,
-    );
+    assert.equal((await request(origin + "/api/private", cookie + "corrupted")).status, 401);
     assert.equal(
       (
         await fetch(origin + "/auth/logout", {

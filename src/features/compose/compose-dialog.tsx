@@ -3,12 +3,7 @@ import { t } from "../../lib/i18n";
 import { useEffect, useState } from "react";
 import { Send, LoaderCircle, Globe, FileText } from "lucide-react";
 import type { Account, SocialPost } from "../../domain/model";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { Avatar, PlatformIcon } from "../../components/platform";
 import { api, errorMessage } from "../../lib/api";
@@ -86,10 +81,12 @@ export function ComposeDialog({
             ]),
         ),
       );
-      const { results } = await api<{ results: PublishResult[] }>(
-        "/api/publish",
-        { accountIds: selected, text, reply, signedEvents },
-      );
+      const { results } = await api<{ results: PublishResult[] }>("/api/publish", {
+        accountIds: selected,
+        text,
+        reply,
+        signedEvents,
+      });
       const failed = results.filter((r) => !r.ok);
       if (failed.length) {
         setSelected(failed.map((r) => r.accountId));
@@ -109,15 +106,12 @@ export function ComposeDialog({
       setBusy(false);
     }
   }
-  const count = [
-    ...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text),
-  ].length;
+  const count = [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)]
+    .length;
   const limit = Math.min(
     ...accounts
       .filter((a) => selected.includes(a.id))
-      .map((a) =>
-        a.platform === "bluesky" ? 300 : a.platform === "twitter" ? 280 : 500,
-      ),
+      .map((a) => (a.platform === "bluesky" ? 300 : a.platform === "twitter" ? 280 : 500)),
   );
   return (
     <Dialog
@@ -131,9 +125,7 @@ export function ComposeDialog({
           {reply ? t("Reply") : t("New post")}
         </DialogTitle>
         <DialogDescription className="sr-only">
-          {t(
-            "Choose accounts and write your post. Drafts are saved in this browser.",
-          )}
+          {t("Choose accounts and write your post. Drafts are saved in this browser.")}
         </DialogDescription>
         <form onSubmit={submit}>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -154,11 +146,7 @@ export function ComposeDialog({
                   }
                   className={`account-chip ${selected.includes(account.id) ? "selected" : ""}`}
                 >
-                  <Avatar
-                    name={account.displayName}
-                    url={account.avatarUrl}
-                    size={24}
-                  />
+                  <Avatar name={account.displayName} url={account.avatarUrl} size={24} />
                   <PlatformIcon platform={account.platform} size={14} />
                   <span>{account.displayName}</span>
                 </button>
@@ -167,9 +155,7 @@ export function ComposeDialog({
           {reply && (
             <blockquote className="mt-4 rounded-2xl bg-muted p-3 text-sm">
               <strong>{reply.author.name}</strong>
-              <p className="mt-1 line-clamp-3 text-muted-foreground">
-                {reply.text}
-              </p>
+              <p className="mt-1 line-clamp-3 text-muted-foreground">{reply.text}</p>
             </blockquote>
           )}
           <textarea
@@ -179,9 +165,7 @@ export function ComposeDialog({
             value={text}
             disabled={busy}
             onChange={(e) => update(e.target.value)}
-            placeholder={
-              reply ? t("Write your reply…") : t("What’s on your mind?")
-            }
+            placeholder={reply ? t("Write your reply…") : t("What’s on your mind?")}
             rows={6}
           />
           {error && (
@@ -198,19 +182,13 @@ export function ComposeDialog({
             </span>
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <span
-              className={
-                count > limit ? "text-destructive" : "text-muted-foreground"
-              }
-            >
+            <span className={count > limit ? "text-destructive" : "text-muted-foreground"}>
               {count}
               {Number.isFinite(limit) ? ` / ${limit}` : ""}
             </span>
             <Button
               type="submit"
-              disabled={
-                busy || !text.trim() || !selected.length || count > limit
-              }
+              disabled={busy || !text.trim() || !selected.length || count > limit}
             >
               {busy ? <LoaderCircle className="animate-spin" /> : <Send />}
               {reply ? t("Reply") : t("Post")}

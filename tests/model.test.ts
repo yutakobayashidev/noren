@@ -1,4 +1,4 @@
-import test from "node:test";
+import { test } from "vite-plus/test";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -37,14 +37,9 @@ test("account credentials survive restart encrypted and reject tampering", () =>
     canPost: true,
     token: "test-private-token",
   });
+  assert.equal(JSON.stringify(store.public()).includes("test-private-token"), false);
   assert.equal(
-    JSON.stringify(store.public()).includes("test-private-token"),
-    false,
-  );
-  assert.equal(
-    readFileSync(join(dir, "accounts.enc")).includes(
-      Buffer.from("test-private-token"),
-    ),
+    readFileSync(join(dir, "accounts.enc")).includes(Buffer.from("test-private-token")),
     false,
   );
   assert.equal(new AccountStore(dir).get("a").token, "test-private-token");

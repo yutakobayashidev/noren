@@ -41,10 +41,7 @@ async function fixture(page: Page) {
   await page.route("**/api/thread", (route) =>
     route.fulfill({
       json: {
-        posts: [
-          post,
-          { ...post, key: "reply", nativeId: "2", text: "A thoughtful reply." },
-        ],
+        posts: [post, { ...post, key: "reply", nativeId: "2", text: "A thoughtful reply." }],
       },
     }),
   );
@@ -60,14 +57,12 @@ test("native-style feed supports reactions, saved posts, thread, theme and acces
   await page.setViewportSize({ width: 1440, height: 1000 });
   await fixture(page);
   await page.getByRole("button", { name: "Like", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Unlike", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Unlike", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await page.getByRole("button", { name: "Save post", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Saved", exact: true })
-    .first()
-    .click();
+  await page.getByRole("button", { name: "Saved", exact: true }).first().click();
   await expect(page.getByText(post.text)).toBeVisible();
   await page.getByRole("button", { name: "Open conversation" }).click();
   await expect(page.getByText("A thoughtful reply.")).toBeVisible();
@@ -106,30 +101,20 @@ test("cross-post partial failure retains the draft and only retries failed accou
   await page.getByRole("button", { name: "Bluesky Alex", exact: true }).click();
   await page.getByLabel("Post text").fill("A cross-post draft");
   await page.getByRole("button", { name: "Post", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText(
-    "Only failed accounts remain selected",
-  );
+  await expect(page.getByRole("alert")).toContainText("Only failed accounts remain selected");
   await expect(page.getByLabel("Post text")).toHaveValue("A cross-post draft");
   await page.getByRole("button", { name: "Post", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(requests).toEqual([["a", "b"], ["b"]]);
 });
-test("mobile layout has no horizontal overflow and dialogs restore focus", async ({
-  page,
-}) => {
+test("mobile layout has no horizontal overflow and dialogs restore focus", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await fixture(page);
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole("button", { name: "Compose post", exact: true }).click();
   await expect(page.getByLabel("Post text")).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(
-    page.getByRole("button", { name: "Compose post", exact: true }),
-  ).toBeFocused();
+  await expect(page.getByRole("button", { name: "Compose post", exact: true })).toBeFocused();
   await page
     .getByRole("navigation", { name: "Mobile navigation" })
     .getByRole("button", { name: "Discover" })
@@ -138,7 +123,5 @@ test("mobile layout has no horizontal overflow and dialogs restore focus", async
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page).toHaveURL(/q=/);
   await page.goBack();
-  await expect(page.getByRole("textbox", { name: "Search posts" })).toHaveValue(
-    "",
-  );
+  await expect(page.getByRole("textbox", { name: "Search posts" })).toHaveValue("");
 });

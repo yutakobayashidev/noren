@@ -1,12 +1,6 @@
+import { postActions } from "./post-actions";
 import { useState } from "react";
-import {
-  ArrowUpRight,
-  Check,
-  Plus,
-  Search,
-  Terminal,
-  Workflow,
-} from "lucide-react";
+import { ArrowUpRight, Check, Plus, Search, Terminal, Workflow } from "lucide-react";
 import { t } from "../lib/i18n";
 import "./catalog.css";
 
@@ -22,7 +16,11 @@ const webMcp = {
 export function PluginCatalog({
   enabled,
   onEnable,
+  actions,
+  onActions,
 }: {
+  actions: string[];
+  onActions: (ids: string[]) => void;
   enabled: boolean;
   onEnable: (value: boolean) => void;
 }) {
@@ -34,10 +32,18 @@ export function PluginCatalog({
       .join(" ")
       .toLocaleLowerCase()
       .includes(query.trim().toLocaleLowerCase());
+  const matchingActions = postActions.filter(
+    (a) =>
+      (!activeOnly || actions.includes(a.id)) &&
+      (a.name + " " + a.author).toLowerCase().includes(query.trim().toLowerCase()),
+  );
   return (
     <section className="registry">
       <div className="registry-mast">
         <h1>{t("Plugin registry")}</h1>
+        <a className="registry-create" href="/site/plugins/">
+          {t("Build a plugin")} ↗
+        </a>
         <label className="registry-search">
           <Search size={18} />
           <input
@@ -51,8 +57,8 @@ export function PluginCatalog({
       </div>
       <div className="registry-filters">
         {[
-          [false, "All plugins", 1],
-          [true, "Enabled plugins", Number(enabled)],
+          [false, "All plugins", 1 + postActions.length],
+          [true, "Enabled plugins", Number(enabled) + actions.length],
         ].map(([active, label, count]) => (
           <button
             key={String(label)}
@@ -100,16 +106,31 @@ export function PluginCatalog({
             </div>
           </div>
         </article>
-      ) : (
+      ) : null}
+      {matchingActions.map((a) => (
+        <article key={a.id} className="registry-action-entry">
+          <div>
+            <small>{t("Post action")}</small>
+            <h2>{a.name}</h2>
+            <p>
+              {t("Developer")} · {a.author}
+            </p>
+          </div>
+          <button
+            onClick={() =>
+              onActions(
+                actions.includes(a.id) ? actions.filter((id) => id !== a.id) : [...actions, a.id],
+              )
+            }
+          >
+            {t(actions.includes(a.id) ? "Disable plugin" : "Enable plugin")}
+          </button>
+        </article>
+      ))}
+      {!matches && !matchingActions.length && (
         <div className="registry-empty" role="status">
           <Search size={24} />
-          <p>
-            {t(
-              activeOnly && !enabled
-                ? "No enabled plugins"
-                : "No matching plugins",
-            )}
-          </p>
+          <p>{t(activeOnly && !enabled ? "No enabled plugins" : "No matching plugins")}</p>
           <button
             onClick={() => {
               setQuery("");

@@ -13,8 +13,7 @@ export async function api<T>(
   });
   const data = await response.json();
   if (!response.ok) {
-    if (response.status === 401)
-      window.dispatchEvent(new Event("flare:session-expired"));
+    if (response.status === 401) window.dispatchEvent(new Event("flare:session-expired"));
     throw new Error(data.error || "Could not complete the request.");
   }
   return data;

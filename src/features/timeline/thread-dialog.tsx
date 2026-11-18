@@ -3,12 +3,7 @@ import { useState, useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
 import type { SocialPost } from "../../domain/model";
 import { postIdentity } from "../../domain/model";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { PostCard } from "./post-card";
 import type { PostInteractions } from "./timeline";
 import { api, errorMessage } from "../../lib/api";
@@ -46,12 +41,8 @@ export function ThreadDialog({
       }}
     >
       <DialogContent className="max-w-2xl bg-background px-3">
-        <DialogTitle className="mb-4 px-3 text-xl font-semibold">
-          {t("Conversation")}
-        </DialogTitle>
-        <DialogDescription className="sr-only">
-          {t("Post and replies")}
-        </DialogDescription>
+        <DialogTitle className="mb-4 px-3 text-xl font-semibold">{t("Conversation")}</DialogTitle>
+        <DialogDescription className="sr-only">{t("Post and replies")}</DialogDescription>
         {error && (
           <div className="feed-error" role="alert">
             <p>{error}</p>
@@ -65,14 +56,10 @@ export function ThreadDialog({
             key={postIdentity(p)}
             post={p}
             {...interactions}
-            saved={interactions.saved.some(
-              (s) => postIdentity(s) === postIdentity(p),
-            )}
+            saved={interactions.saved.some((s) => postIdentity(s) === postIdentity(p))}
             onUpdate={(updated) =>
               setPosts((old) =>
-                old.map((item) =>
-                  postIdentity(item) === postIdentity(updated) ? updated : item,
-                ),
+                old.map((item) => (postIdentity(item) === postIdentity(updated) ? updated : item)),
               )
             }
           />

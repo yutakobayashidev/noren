@@ -1,19 +1,8 @@
 import { blueskyConnectionRouter } from "./bluesky-oauth";
-import {
-  nostrRouter,
-  nostrFeed,
-  nostrThread,
-  publishNostr,
-  signedEvent,
-} from "./adapters/nostr";
+import { nostrRouter, nostrFeed, nostrThread, publishNostr, signedEvent } from "./adapters/nostr";
 import { connectionRouter } from "./connections";
 import { Router } from "express";
-import {
-  misskeyFeed,
-  misskeyRequest,
-  mapMisskey,
-  misskeyNotifications,
-} from "./adapters/misskey";
+import { misskeyFeed, misskeyRequest, mapMisskey, misskeyNotifications } from "./adapters/misskey";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { z } from "zod";
@@ -35,12 +24,7 @@ import {
   mapBluesky,
   forgetBluesky,
 } from "./adapters/bluesky";
-import {
-  twitterProfiles,
-  twitterClient,
-  twitterFeed,
-  twitterPost,
-} from "./adapters/twitter";
+import { twitterProfiles, twitterClient, twitterFeed, twitterPost } from "./adapters/twitter";
 import type { SocialPost } from "../src/domain/model";
 
 const sourceSchema = z.object({
@@ -77,8 +61,7 @@ export function apiRouter() {
       )
     ) {
       res.status(403).json({
-        error:
-          "This preview is read-only. Sign in with OIDC to connect accounts.",
+        error: "This preview is read-only. Sign in with OIDC to connect accounts.",
       });
       return;
     }
@@ -88,9 +71,7 @@ export function apiRouter() {
     const id = identityKey(res.locals.identity);
     let store = stores.get(id);
     if (!store) {
-      store = new AccountStore(
-        join(process.env.FLARE_DATA_DIR || ".data", "users", id),
-      );
+      store = new AccountStore(join(process.env.FLARE_DATA_DIR || ".data", "users", id));
       stores.set(id, store);
     }
     res.locals.store = store;
@@ -99,9 +80,7 @@ export function apiRouter() {
   router.use("/nostr", nostrRouter());
   router.use("/connect/bluesky", blueskyConnectionRouter());
   router.use("/connect", connectionRouter());
-  router.get("/accounts", (_req, res) =>
-    res.json({ accounts: res.locals.store.public(), guest }),
-  );
+  router.get("/accounts", (_req, res) => res.json({ accounts: res.locals.store.public(), guest }));
   router.get("/twitter/profiles", async (_req, res) =>
     res.json({ profiles: await twitterProfiles() }),
   );
@@ -138,10 +117,7 @@ export function apiRouter() {
         handle: "",
         canPost: true,
       };
-      const { data } = await mastodonRequest(
-        provisional,
-        "/api/v1/accounts/verify_credentials",
-      );
+      const { data } = await mastodonRequest(provisional, "/api/v1/accounts/verify_credentials");
       account = {
         ...provisional,
         id: `mastodon:${new URL(origin).host}:${data.id}`,
@@ -244,8 +220,7 @@ export function apiRouter() {
   router.post("/thread", async (req, res) => {
     const input = postSchema.parse(req.body);
     const store: AccountStore = res.locals.store;
-    const account =
-      input.accountId === "guest" ? guest : store.get(input.accountId);
+    const account = input.accountId === "guest" ? guest : store.get(input.accountId);
     if (account.platform === "nostr") {
       res.json({ posts: await nostrThread(account, input.nativeId) });
       return;
@@ -258,8 +233,8 @@ export function apiRouter() {
         ),
       );
       res.json({
-        posts: [...ancestors.data.reverse(), note.data, ...replies.data].map(
-          (n) => mapMisskey(n, account),
+        posts: [...ancestors.data.reverse(), note.data, ...replies.data].map((n) =>
+          mapMisskey(n, account),
         ),
       });
       return;
@@ -308,8 +283,7 @@ export function apiRouter() {
       .parse(req.body);
     const store: AccountStore = res.locals.store;
     const account = store.get(input.accountId);
-    if (account.platform === "nostr")
-      throw new Error("Nostr reactions are unavailable.");
+    if (account.platform === "nostr") throw new Error("Nostr reactions are unavailable.");
     if (!account.canPost) throw new Error("This feed is read-only.");
     if (account.platform === "misskey") {
       const path = {
@@ -347,8 +321,7 @@ export function apiRouter() {
     } else if (account.platform === "bluesky") {
       const agent = await blueskyAgent(account, store);
       if (input.action === "like" || input.action === "repost") {
-        if (!input.cid)
-          throw new Error("Missing post revision. Refresh the timeline.");
+        if (!input.cid) throw new Error("Missing post revision. Refresh the timeline.");
         const result =
           input.action === "like"
             ? await agent.like(input.nativeId, input.cid)
@@ -385,10 +358,7 @@ export function apiRouter() {
       .parse(req.body);
     const store: AccountStore = res.locals.store;
     const accounts = [...new Set(input.accountIds)].map((id) => store.get(id));
-    if (
-      input.reply &&
-      (accounts.length !== 1 || accounts[0].id !== input.reply.accountId)
-    )
+    if (input.reply && (accounts.length !== 1 || accounts[0].id !== input.reply.accountId))
       throw new Error("Replies use the account that opened the post.");
     const results = await Promise.all(
       accounts.map(async (account) => {
@@ -404,11 +374,7 @@ export function apiRouter() {
             return { accountId: account.id, ok: true };
           }
           const limit =
-            account.platform === "bluesky"
-              ? 300
-              : account.platform === "twitter"
-                ? 280
-                : 500;
+            account.platform === "bluesky" ? 300 : account.platform === "twitter" ? 280 : 500;
           if (
             [
               ...new Intl.Segmenter(undefined, {
@@ -429,27 +395,20 @@ export function apiRouter() {
               replyId: input.reply?.nativeId,
             });
           else if (account.platform === "bluesky")
-            await blueskyPublish(
-              account,
-              store,
-              input.text,
-              input.reply as SocialPost | undefined,
-            );
+            await blueskyPublish(account, store, input.text, input.reply as SocialPost | undefined);
           else {
             const client = twitterClient(account);
             const result = input.reply
               ? await client.reply(input.text, input.reply.nativeId)
               : await client.tweet(input.text);
-            if (!result.success)
-              throw new Error("X could not publish this post.");
+            if (!result.success) throw new Error("X could not publish this post.");
           }
           return { accountId: account.id, ok: true };
         } catch (error) {
           return {
             accountId: account.id,
             ok: false,
-            error:
-              error instanceof Error ? error.message : "Could not publish.",
+            error: error instanceof Error ? error.message : "Could not publish.",
           };
         }
       }),

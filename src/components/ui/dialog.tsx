@@ -4,13 +4,11 @@ import * as React from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
-const ReturnFocus =
-  React.createContext<React.RefObject<HTMLElement | null> | null>(null);
+const ReturnFocus = React.createContext<React.RefObject<HTMLElement | null> | null>(null);
 export function Dialog(props: React.ComponentProps<typeof Primitive.Root>) {
   const target = React.useRef<HTMLElement | null>(null);
   const wasOpen = React.useRef(false);
-  if (props.open && !wasOpen.current)
-    target.current = document.activeElement as HTMLElement;
+  if (props.open && !wasOpen.current) target.current = document.activeElement as HTMLElement;
   wasOpen.current = !!props.open;
   return (
     <ReturnFocus.Provider value={target}>

@@ -1,0 +1,548 @@
+---
+import Shell from "../Shell.astro";
+import { clientPage, sitePage } from "../links";
+import code from "../../../../packages/plugin-starter/action.js?raw";
+---
+
+<Shell title="ホーム">
+  <section class="feature" aria-labelledby="headline">
+    <img
+      class="field"
+      src={sitePage("screens/studio.webp")}
+      alt=""
+      fetchpriority="high"
+    />
+    <div class="feature-copy">
+      <h1 id="headline">
+        いくつもの SNS を、
+        <br />
+        ひとつのホームに。
+      </h1>
+      <p>
+        Flare Web
+        は、アカウントをまたいで投稿を読み、届けたい場所を選んで書けるソーシャルクライアントです。
+      </p>
+      <a class="launch" href={clientPage()}>
+        Flare Web を開く <span>↗</span>
+      </a>
+    </div>
+  </section>
+  <section class="networks">
+    <h2>対応する SNS</h2>
+    <ul>
+      {["X", "Mastodon", "Bluesky", "Misskey", "Nostr"].map((network) => (
+        <li>{network}</li>
+      ))}
+    </ul>
+  </section>
+  <section class="tour">
+    <div>
+      <h2>
+        読む場所も、
+        <br />
+        書く場所も。
+      </h2>
+      <p>
+        ホームでは複数の SNS
+        の投稿を時系列で。投稿画面では、ひとつの下書きから送信先を選べます。
+      </p>
+    </div>
+    <figure class="showcase">
+      <div class="device">
+        <img
+          id="screen"
+          width="585"
+          height="1080"
+          src={sitePage("screens/timeline.png")}
+          alt="サンプル投稿を表示した統合タイムライン"
+        />
+      </div>
+      <figcaption>
+        <button
+          aria-pressed="true"
+          data-screen={sitePage("screens/timeline.png")}
+          data-alt="統合タイムライン"
+        >
+          タイムライン
+        </button>
+        <button
+          aria-pressed="false"
+          data-screen={sitePage("screens/compose.png")}
+          data-alt="投稿先のアカウントを選ぶ画面"
+        >
+          投稿画面
+        </button>
+      </figcaption>
+    </figure>
+  </section>
+  <section class="extensions">
+    <h2>Flare を拡張する</h2>
+    <div class="stories">
+      <a href={clientPage("#page=plugins")}>
+        <div class="art">
+          <img
+            src={sitePage("screens/registry-art.png")}
+            width="600"
+            height="350"
+            alt=""
+            loading="lazy"
+          />
+        </div>
+        <h3>
+          プラグインを探す <span>↗</span>
+        </h3>
+        <p>投稿の引用やブラウザからの検索など、使いたい機能を選べます。</p>
+      </a>
+      <a href={sitePage("plugins/")}>
+        <div class="source-art" aria-hidden="true">
+          <div>
+            <small>action.js</small>
+            <pre>{code.trim()}</pre>
+          </div>
+        </div>
+        <h3>
+          作者ガイドを読む <span>→</span>
+        </h3>
+        <p>
+          サンプル投稿で試しながら、JavaScript
+          で最初の投稿操作を書いてみましょう。
+        </p>
+      </a>
+    </div>
+  </section>
+  <footer>
+    <a href={sitePage("")}>Flare Web</a>
+    <span>AGPL-3.0</span>
+    <a href={clientPage()}>アプリを開く ↗</a>
+  </footer>
+</Shell>
+<script>
+  const screenImage = document.querySelector<HTMLImageElement>("#screen")!;
+  const controls =
+    document.querySelectorAll<HTMLButtonElement>("[data-screen]");
+  for (const control of controls)
+    control.addEventListener("click", () => {
+      screenImage.src = control.dataset.screen!;
+      screenImage.alt = control.dataset.alt!;
+      for (const item of controls)
+        item.setAttribute("aria-pressed", String(item === control));
+    });
+</script>
+<style>
+  :global(body:has(.feature)) {
+    color: #242127;
+    background: white;
+  }
+  :global(body:has(.feature) main),
+  :global(body:has(.feature) header) {
+    max-width: 1660px;
+    padding-inline: clamp(14px, 3vw, 52px);
+  }
+  :global(body:has(.feature) header) {
+    border: 0;
+    padding-block: 14px;
+  }
+  :global(body:has(.feature) main) {
+    padding-block: 0;
+  }
+  :global(body:has(.feature) header nav a:last-child) {
+    background: #f1eff2;
+    padding: 6px 14px;
+    border-radius: 30px;
+  }
+  .feature {
+    position: relative;
+    isolation: isolate;
+    color: #fff;
+    display: grid;
+    grid-template-columns: 1.07fr 0.93fr;
+    align-items: center;
+    min-height: clamp(520px, 44vw, 680px);
+    overflow: hidden;
+    border-radius: 10px;
+  }
+  .field {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+  }
+  .feature-copy {
+    padding: clamp(28px, 4.5vw, 80px);
+    padding-right: 0;
+    z-index: 1;
+  }
+  .feature h1 {
+    font-size: clamp(38px, 4.35vw, 76px);
+    line-height: 1.28;
+    letter-spacing: -0.055em;
+    font-weight: 620;
+    margin: 0 0 24px;
+    color: white;
+  }
+  .feature-copy p {
+    font-size: clamp(15px, 1.15vw, 19px);
+    max-width: 34ch;
+    line-height: 1.85;
+    color: #f6edf6;
+  }
+  .launch {
+    display: inline-flex;
+    align-items: center;
+    gap: 22px;
+    border-radius: 40px;
+    background: white;
+    color: #251f2c;
+    text-decoration: none;
+    font-weight: 650;
+    padding: 11px 21px;
+    margin-top: 8px;
+  }
+  .launch:hover {
+    background: #f4ebff;
+  }
+  .showcase {
+    position: relative;
+    align-self: stretch;
+    margin: 0;
+    min-height: 100%;
+    display: grid;
+    place-items: center;
+  }
+  .device {
+    width: clamp(225px, 19vw, 300px);
+    margin-bottom: 26px;
+    transform: perspective(1000px) rotateY(-12deg) rotate(5deg);
+    border: 5px solid #302a36;
+    outline: 1px solid #bab1c1;
+    border-radius: 26px;
+    overflow: hidden;
+    background: #302a36;
+    box-shadow: 12px 28px 45px #120d244d;
+  }
+  .device img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  figcaption {
+    position: absolute;
+    bottom: 18px;
+    display: flex;
+    gap: 3px;
+    background: #302438e8;
+    border-radius: 32px;
+    padding: 4px;
+  }
+  figcaption button {
+    font: inherit;
+    font-size: 12px;
+    padding: 5px 13px;
+    color: #fff;
+    background: transparent;
+    border-radius: 30px;
+  }
+  figcaption button[aria-pressed="true"] {
+    background: white;
+    color: #28212b;
+  }
+  .networks,
+  .extensions,
+  footer {
+    margin-inline: clamp(2px, 4.4vw, 78px);
+  }
+  .networks {
+    display: flex;
+    align-items: center;
+    gap: 7vw;
+    border-bottom: 1px solid #ddd9df;
+    padding: 32px 0;
+  }
+  .networks h2 {
+    font-size: 13px;
+    color: #635e68;
+    font-weight: 500;
+    white-space: nowrap;
+    margin: 0;
+  }
+  .networks ul {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .networks li {
+    font:
+      600 clamp(18px, 2vw, 32px)/1.3 Arial,
+      sans-serif;
+    letter-spacing: -0.055em;
+  }
+  .extensions {
+    padding-block: clamp(42px, 6vw, 94px);
+  }
+  .extensions h2 {
+    font-size: clamp(30px, 3.2vw, 48px);
+    letter-spacing: -0.05em;
+    font-weight: 620;
+    margin: 0 0 24px;
+  }
+  .stories {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(18px, 3vw, 48px);
+  }
+  .stories a {
+    text-decoration: none;
+    min-width: 0;
+  }
+  .stories h3 {
+    font-size: clamp(20px, 2vw, 30px);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    margin: 15px 0 4px;
+  }
+  .stories h3 span {
+    font-size: 0.75em;
+  }
+  .stories p {
+    margin: 0;
+    color: #635d69;
+    font-size: 15px;
+  }
+  .art,
+  .source-art {
+    height: clamp(180px, 20vw, 300px);
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .source-art {
+    background: linear-gradient(125deg, #dceae4, #a6c6ba);
+    display: grid;
+    place-items: center;
+  }
+  .source-art > div {
+    width: 80%;
+    background: #173730;
+    color: #d5eae1;
+    transform: rotate(-4deg);
+    border-radius: 10px;
+    padding: 12px 18px;
+    box-shadow: 6px 16px 28px #344a4138;
+  }
+  .source-art small {
+    font: 13px monospace;
+    color: #a7cbb9;
+  }
+  .source-art pre {
+    background: transparent;
+    color: #e4f5df;
+    white-space: pre;
+    overflow: hidden;
+    font-size: clamp(10px, 0.88vw, 15px);
+    line-height: 1.6;
+    padding: 0;
+    margin: 10px 0;
+  }
+  footer {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    border-top: 1px solid #dedce0;
+    padding: 25px 0;
+    font-size: 13px;
+  }
+  footer a:first-child {
+    font-weight: 700;
+  }
+  footer a:last-child {
+    margin-left: auto;
+  }
+  @media (max-width: 750px) {
+    .feature {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+    .feature-copy {
+      padding: 32px 22px 12px;
+    }
+    .feature h1 {
+      font-size: clamp(30px, 7.6vw, 48px);
+      margin-bottom: 12px;
+    }
+    .feature-copy p {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .showcase {
+      height: 286px;
+      overflow: hidden;
+    }
+    .device {
+      width: 175px;
+      align-self: start;
+      margin-top: 14px;
+    }
+    .showcase figcaption {
+      bottom: 10px;
+    }
+    .field {
+      object-position: 58% 50%;
+    }
+    .feature-copy {
+      background: linear-gradient(#21172c99, #21172c40, transparent);
+    }
+    .networks {
+      display: block;
+      padding: 16px 0;
+    }
+    .networks h2 {
+      margin-bottom: 8px;
+    }
+    .stories {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+    .extensions {
+      padding-block: 36px;
+    }
+    .extensions h2 {
+      margin-bottom: 16px;
+    }
+    .art,
+    .source-art {
+      height: 185px;
+    }
+  }
+
+  :global(body:has(.feature) main) {
+    max-width: none;
+    padding-inline: 0;
+  }
+  :global(body:has(.feature) header) {
+    max-width: none;
+    padding-inline: clamp(20px, 4vw, 72px);
+    padding-block: 12px;
+    background: #fff;
+  }
+  :global(body:has(.feature) header .logo) {
+    color: #18533d;
+  }
+  :global(body:has(.feature) header nav a:last-child) {
+    background: #15533c;
+    color: white;
+    padding: 9px 17px;
+  }
+  .feature {
+    display: flex;
+    align-items: flex-end;
+    border-radius: 0;
+    height: clamp(490px, 72svh, 740px);
+  }
+  .field {
+    object-position: center 47%;
+  }
+  .feature:after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(80deg, #10231ee0 0%, #11231e88 34%, #15251e08 75%),
+      linear-gradient(0deg, #0c1a1b44, transparent 60%);
+  }
+  .feature-copy {
+    background: none;
+    padding: clamp(28px, 5vw, 84px);
+    max-width: 780px;
+  }
+  .feature h1 {
+    font-weight: 510;
+    font-size: clamp(39px, 4.7vw, 78px);
+    line-height: 1.25;
+  }
+  .feature-copy p {
+    color: #fff;
+    max-width: 39ch;
+  }
+  .networks,
+  .extensions,
+  .tour,
+  footer {
+    max-width: 1240px;
+    width: calc(100% - clamp(40px, 10vw, 140px));
+    margin-inline: auto;
+  }
+  .networks {
+    padding-block: clamp(28px, 3vw, 52px);
+  }
+  .tour {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8%;
+    align-items: center;
+    margin-top: clamp(36px, 5vw, 84px);
+  }
+  .tour h2 {
+    font-weight: 520;
+    font-size: clamp(32px, 4vw, 56px);
+    letter-spacing: -0.055em;
+    line-height: 1.3;
+    margin: 0;
+  }
+  .tour p {
+    line-height: 1.9;
+    color: #53635a;
+    max-width: 30ch;
+  }
+  .tour .showcase {
+    min-height: 0;
+    height: clamp(310px, 32vw, 460px);
+    border-radius: 12px;
+    background: linear-gradient(130deg, #e9eddb, #adccbc);
+    overflow: hidden;
+  }
+  .tour .device {
+    align-self: start;
+    margin-top: 24px;
+    width: clamp(180px, 16vw, 240px);
+  }
+  .tour figcaption {
+    background: #18362be8;
+  }
+  @media (max-width: 750px) {
+    .feature {
+      height: clamp(460px, 65svh, 610px);
+    }
+    .feature-copy {
+      padding: 28px 22px;
+    }
+    .feature h1 {
+      font-size: clamp(32px, 8vw, 48px);
+    }
+    .field {
+      object-position: 57% center;
+    }
+    .tour {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .tour .showcase {
+      height: 286px;
+    }
+    .networks {
+      padding-block: 22px;
+    }
+  }
+</style>

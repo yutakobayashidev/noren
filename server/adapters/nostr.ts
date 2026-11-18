@@ -22,13 +22,9 @@ export const signedEvent = z.object({
 const now = () => Math.floor(Date.now() / 1000);
 export function nostrRouter() {
   const router = Router();
-  const pending = new Map<
-    string,
-    { expires: number; template: EventTemplate }
-  >();
+  const pending = new Map<string, { expires: number; template: EventTemplate }>();
   router.post("/challenge", (_req, res) => {
-    for (const [key, value] of pending)
-      if (value.expires < now()) pending.delete(key);
+    for (const [key, value] of pending) if (value.expires < now()) pending.delete(key);
     const template = {
       kind: 27235,
       created_at: now(),
@@ -38,8 +34,7 @@ export function nostrRouter() {
           "u",
           new URL(
             "/api/nostr/connect",
-            process.env.APP_ORIGIN ||
-              "http://localhost:" + (process.env.PORT || 3000),
+            process.env.APP_ORIGIN || "http://localhost:" + (process.env.PORT || 3000),
           ).href,
         ],
         ["method", "POST"],
@@ -97,11 +92,7 @@ function post(event: Event, account: StoredAccount): SocialPost {
     createdAt: new Date(event.created_at * 1000).toISOString(),
   };
 }
-export async function nostrFeed(
-  account: StoredAccount,
-  source: FeedSource,
-  cursor?: string,
-) {
+export async function nostrFeed(account: StoredAccount, source: FeedSource, cursor?: string) {
   let authors = [account.publicKey!];
   if (source.kind === "home") {
     const [contacts] = await query({ authors, kinds: [3], limit: 1 });
@@ -112,22 +103,18 @@ export async function nostrFeed(
         .map((t) => t[1]),
     );
   } else if (source.kind === "user") authors = [hex.parse(source.target)];
-  else if (source.kind === "list")
-    throw new Error("Nostr lists are unavailable.");
+  else if (source.kind === "list") throw new Error("Nostr lists are unavailable.");
   const events = (
     await query({
       kinds: [1],
       limit: 30,
       ...(source.kind === "search" ? { search: source.query } : { authors }),
-      ...(cursor
-        ? { until: z.coerce.number().int().nonnegative().parse(cursor) }
-        : {}),
+      ...(cursor ? { until: z.coerce.number().int().nonnegative().parse(cursor) } : {}),
     })
   ).slice(0, 30);
   return {
     posts: events.map((e) => post(e, account)),
-    nextCursor:
-      events.length === 30 ? String(events[29].created_at - 1) : undefined,
+    nextCursor: events.length === 30 ? String(events[29].created_at - 1) : undefined,
   };
 }
 export async function nostrThread(account: StoredAccount, id: string) {

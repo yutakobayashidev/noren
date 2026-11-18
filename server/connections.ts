@@ -4,7 +4,7 @@ import { z } from "zod";
 import { publicOrigin, publicJson } from "./http";
 import { identityKey } from "./auth";
 import { type AccountStore, type StoredAccount } from "./store";
-import { mastodonRequest, webUrl } from "./adapters/mastodon";
+import { webUrl } from "./adapters/mastodon";
 type Flow = {
   owner: string;
   expires: number;
@@ -14,10 +14,7 @@ type Flow = {
   verifier?: string;
   platform: "mastodon" | "misskey";
 };
-export function connectionRouter(
-  request = publicJson,
-  validateOrigin = publicOrigin,
-) {
+export function connectionRouter(request = publicJson, validateOrigin = publicOrigin) {
   const router = Router();
   const flows = new Map<string, Flow>();
   function callback(platform: string) {
@@ -31,10 +28,8 @@ export function connectionRouter(
     const origin = await validateOrigin(
       z.object({ origin: z.string().max(300) }).parse(req.body).origin,
     );
-    for (const [id, flow] of flows)
-      if (flow.expires < Date.now()) flows.delete(id);
-    if (flows.size >= 1000)
-      throw new Error("Too many pending sign-ins. Try again later.");
+    for (const [id, flow] of flows) if (flow.expires < Date.now()) flows.delete(id);
+    if (flows.size >= 1000) throw new Error("Too many pending sign-ins. Try again later.");
     const state = crypto.randomUUID();
     const flow: Flow = {
       owner: identityKey(res.locals.identity),
@@ -63,9 +58,7 @@ export function connectionRouter(
         response_type: "code",
         scope: "read write follow",
         state,
-        code_challenge: createHash("sha256")
-          .update(flow.verifier)
-          .digest("base64url"),
+        code_challenge: createHash("sha256").update(flow.verifier).digest("base64url"),
         code_challenge_method: "S256",
       }).toString();
     } else {
@@ -126,14 +119,11 @@ export function connectionRouter(
         canPost: true,
       };
     } else {
-      const { data } = await request(
-        new URL(`/api/miauth/${state}/check`, flow.origin),
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: "{}",
-        },
-      );
+      const { data } = await request(new URL(`/api/miauth/${state}/check`, flow.origin), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      });
       if (!data.ok || !data.token || !data.user)
         throw new Error("Misskey authorization was not completed.");
       const user = data.user;

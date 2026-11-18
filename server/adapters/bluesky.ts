@@ -1,21 +1,12 @@
 import { blueskyOAuth } from "../bluesky-oauth";
 import { Agent, BskyAgent, RichText, type AtpSessionData } from "@atproto/api";
 import type { StoredAccount, AccountStore } from "../store";
-import type {
-  SocialPost,
-  FeedSource,
-  FeedPage,
-  Notification,
-} from "../../src/domain/model";
+import type { SocialPost, FeedSource, FeedPage, Notification } from "../../src/domain/model";
 import { webUrl } from "./mastodon";
 import { publicFetch } from "../http";
 
 // Port of Flare's BlueskyDataSource: session, timeline cursor, post URI/CID and viewer actions.
-export function mapBluesky(
-  post: any,
-  account: StoredAccount,
-  reason?: any,
-): SocialPost {
+export function mapBluesky(post: any, account: StoredAccount, reason?: any): SocialPost {
   const embed = post.embed;
   const media = embed?.images ?? embed?.media?.images ?? [];
   const quoted =
@@ -42,9 +33,7 @@ export function mapBluesky(
     reposted: !!post.viewer?.repost,
     likeUri: post.viewer?.like,
     repostUri: post.viewer?.repost,
-    sensitive: post.labels?.some((l: any) =>
-      ["porn", "sexual", "graphic-media"].includes(l.val),
-    ),
+    sensitive: post.labels?.some((l: any) => ["porn", "sexual", "graphic-media"].includes(l.val)),
     media: media
       .map((m: any) => ({
         type: "photo",
@@ -68,14 +57,9 @@ const stores = new WeakMap<AccountStore, Map<string, BskyAgent>>();
 export function forgetBluesky(id: string, store: AccountStore) {
   stores.get(store)?.delete(id);
 }
-export async function blueskyAgent(
-  account: StoredAccount,
-  store: AccountStore,
-) {
+export async function blueskyAgent(account: StoredAccount, store: AccountStore) {
   if (account.oauthSession)
-    return new Agent(
-      await blueskyOAuth(store).restore(account.id.slice("bluesky:".length)),
-    );
+    return new Agent(await blueskyOAuth(store).restore(account.id.slice("bluesky:".length)));
   let agents = stores.get(store);
   if (!agents) {
     agents = new Map();

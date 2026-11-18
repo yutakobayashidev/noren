@@ -72,8 +72,6 @@ export function mergePosts(previous: SocialPost[], incoming: SocialPost[]) {
   const posts = new Map(previous.map((post) => [postIdentity(post), post]));
   incoming.forEach((post) => posts.set(postIdentity(post), post));
   return [...posts.values()].sort(
-    (a, b) =>
-      (Date.parse(b.createdAt ?? "") || 0) -
-      (Date.parse(a.createdAt ?? "") || 0),
+    (a, b) => (Date.parse(b.createdAt ?? "") || 0) - (Date.parse(a.createdAt ?? "") || 0),
   );
 }

@@ -13,14 +13,8 @@
   "Misskey server": ["Misskey サーバー", "Misskey 服务器"],
   "Server": ["サーバー", "服务器"],
   "Sign-in method": ["ログイン方法", "登录方式"],
-  "Authorize on server (recommended)": [
-    "サーバーで認可（推奨）",
-    "在服务器上授权（推荐）"
-  ],
-  "Use an existing access token": [
-    "既存のアクセストークンを使う",
-    "使用已有的访问令牌"
-  ],
+  "Authorize on server (recommended)": ["サーバーで認可（推奨）", "在服务器上授权（推荐）"],
+  "Use an existing access token": ["既存のアクセストークンを使う", "使用已有的访问令牌"],
   "Access token": ["アクセストークン", "访问令牌"],
   "Handle": ["ハンドル", "账号标识"],
   "App password": ["アプリパスワード", "应用专用密码"],
@@ -74,20 +68,14 @@
   "quoted your post": ["があなたの投稿を引用しました", "引用了你的帖子"],
   "Loading notifications…": ["通知を読み込み中…", "正在加载通知…"],
   "No notifications yet": ["通知はまだありません", "暂无通知"],
-  "New activity will appear here.": [
-    "新しい通知がここに表示されます。",
-    "新动态会显示在这里。"
-  ],
+  "New activity will appear here.": ["新しい通知がここに表示されます。", "新动态会显示在这里。"],
   "Connect an account to see your notifications.": [
     "通知を見るにはアカウントを接続してください。",
     "连接账号即可查看通知。"
   ],
   "Loading posts…": ["投稿を読み込み中…", "正在加载帖子…"],
   "Nothing here yet": ["投稿はまだありません", "暂无帖子"],
-  "New posts will appear here.": [
-    "新しい投稿がここに表示されます。",
-    "新帖子会显示在这里。"
-  ],
+  "New posts will appear here.": ["新しい投稿がここに表示されます。", "新帖子会显示在这里。"],
   "Load more": ["さらに読み込む", "加载更多"],
   "You’re all caught up": ["最新の投稿まで読みました", "已浏览全部帖子"],
   "Add timeline": ["タイムラインを追加", "添加时间线"],
@@ -105,10 +93,7 @@
   "List": ["リスト", "列表"],
   "Select a list": ["リストを選択", "选择列表"],
   "Search query": ["検索語", "搜索词"],
-  "What would you like to follow?": [
-    "何をフォローしますか？",
-    "你想关注什么？"
-  ],
+  "What would you like to follow?": ["何をフォローしますか？", "你想关注什么？"],
   "Opening Flare…": ["Flare を開いています…", "正在打开 Flare…"],
   "Your social world.": ["あなたの SNS を", "你的社交世界"],
   "A little closer.": ["もっと身近に。", "触手可及。"],
@@ -211,5 +196,10 @@
   "No enabled plugins": ["有効なプラグインはありません", "暂无启用的插件"],
   "Developer": ["作者", "开发者"],
   "Documentation": ["ドキュメント", "文档"],
-  "Browser tools": ["ブラウザツール", "浏览器工具"]
+  "Browser tools": ["ブラウザツール", "浏览器工具"],
+  "Build a plugin": ["プラグインを作る", "开发插件"],
+  "Copy": ["コピー", "复制"],
+  "Plugin output": ["プラグインの結果", "插件结果"],
+  "Select and copy the text": ["テキストを選択してコピーしてください", "请选择并复制文本"],
+  "Post action": ["投稿操作", "帖子操作"]
 }

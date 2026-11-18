@@ -246,3 +246,30 @@
     padding-inline: 8px;
   }
 }
+.registry-create {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.registry-action-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 24px;
+  margin-top: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+.registry-action-entry h2 {
+  font-weight: 650;
+  font-size: 20px;
+}
+.registry-action-entry small,
+.registry-action-entry p {
+  color: var(--muted-foreground);
+}
+.registry-action-entry button {
+  background: var(--muted);
+  padding: 9px 12px;
+  border-radius: 8px;
+}

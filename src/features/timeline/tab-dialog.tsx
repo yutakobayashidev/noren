@@ -1,12 +1,7 @@
 import { t } from "../../lib/i18n";
 import { useState, useEffect } from "react";
 import type { Account, Tab, FeedSource } from "../../domain/model";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { api, errorMessage } from "../../lib/api";
 export function TabDialog({
@@ -50,9 +45,7 @@ export function TabDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogTitle className="text-xl font-semibold">
-          {t("Add timeline")}
-        </DialogTitle>
+        <DialogTitle className="text-xl font-semibold">{t("Add timeline")}</DialogTitle>
         <DialogDescription className="mt-1 text-sm text-muted-foreground">
           {t("Keep a search, profile or list close by.")}
         </DialogDescription>
@@ -79,20 +72,11 @@ export function TabDialog({
         >
           <label>
             {t("Name")}
-            <input
-              name="title"
-              required
-              placeholder={t("My timeline")}
-              maxLength={50}
-            />
+            <input name="title" required placeholder={t("My timeline")} maxLength={50} />
           </label>
           <label>
             {t("Account")}
-            <select
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              required
-            >
+            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} required>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.displayName} · {a.platform}
@@ -102,10 +86,7 @@ export function TabDialog({
           </label>
           <label>
             {t("Timeline")}
-            <select
-              value={kind}
-              onChange={(e) => setKind(e.target.value as FeedSource["kind"])}
-            >
+            <select value={kind} onChange={(e) => setKind(e.target.value as FeedSource["kind"])}>
               <option value="home">{t("Home")}</option>
               <option value="search">{t("Search")}</option>
               <option value="user">{t("Profile")}</option>
@@ -131,11 +112,7 @@ export function TabDialog({
                 <input
                   name="target"
                   required
-                  placeholder={
-                    kind === "search"
-                      ? t("What would you like to follow?")
-                      : "username"
-                  }
+                  placeholder={kind === "search" ? t("What would you like to follow?") : "username"}
                 />
               </label>
             )

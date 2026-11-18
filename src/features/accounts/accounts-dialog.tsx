@@ -4,12 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, LogOut, LoaderCircle, Check, ArrowLeft } from "lucide-react";
 import type { Account, Platform } from "../../domain/model";
 import { platformNames } from "../../domain/model";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { Avatar, PlatformIcon } from "../../components/platform";
 import { api, errorMessage } from "../../lib/api";
@@ -69,10 +64,7 @@ export function AccountsDialog({
         platform === "misskey" ||
         (platform === "mastodon" && mastodonMethod === "oauth")
       ) {
-        const { url } = await api<{ url: string }>(
-          "/api/connect/" + platform,
-          values,
-        );
+        const { url } = await api<{ url: string }>("/api/connect/" + platform, values);
         window.location.assign(url);
         return;
       }
@@ -90,11 +82,7 @@ export function AccountsDialog({
     setBusy(true);
     setError("");
     try {
-      await api(
-        `/api/accounts/${encodeURIComponent(account.id)}`,
-        undefined,
-        "DELETE",
-      );
+      await api(`/api/accounts/${encodeURIComponent(account.id)}`, undefined, "DELETE");
       onChange();
     } catch (e) {
       setError(errorMessage(e));
@@ -142,9 +130,7 @@ export function AccountsDialog({
               </div>
             ))}
             <div className="grid gap-2">
-              {(
-                ["mastodon", "bluesky", "twitter", "misskey", "nostr"] as const
-              ).map((p) => (
+              {(["mastodon", "bluesky", "twitter", "misskey", "nostr"] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => {
@@ -172,12 +158,7 @@ export function AccountsDialog({
               <>
                 <label>
                   {t("Server")}
-                  <input
-                    name="origin"
-                    placeholder="mastodon.social"
-                    required
-                    autoComplete="url"
-                  />
+                  <input name="origin" placeholder="mastodon.social" required autoComplete="url" />
                 </label>
                 <label>
                   {t("Sign-in method")}
@@ -185,23 +166,14 @@ export function AccountsDialog({
                     value={mastodonMethod}
                     onChange={(event) => setMastodonMethod(event.target.value)}
                   >
-                    <option value="oauth">
-                      {t("Authorize on server (recommended)")}
-                    </option>
-                    <option value="token">
-                      {t("Use an existing access token")}
-                    </option>
+                    <option value="oauth">{t("Authorize on server (recommended)")}</option>
+                    <option value="token">{t("Use an existing access token")}</option>
                   </select>
                 </label>
                 {mastodonMethod === "token" && (
                   <label>
                     {t("Access token")}
-                    <input
-                      name="token"
-                      type="password"
-                      autoComplete="off"
-                      required
-                    />
+                    <input name="token" type="password" autoComplete="off" required />
                   </label>
                 )}
               </>
@@ -219,13 +191,8 @@ export function AccountsDialog({
                 </label>
                 <label>
                   {t("Sign-in method")}
-                  <select
-                    value={blueskyMethod}
-                    onChange={(e) => setBlueskyMethod(e.target.value)}
-                  >
-                    <option value="oauth">
-                      {t("Authorize on server (recommended)")}
-                    </option>
+                  <select value={blueskyMethod} onChange={(e) => setBlueskyMethod(e.target.value)}>
+                    <option value="oauth">{t("Authorize on server (recommended)")}</option>
                     <option value="password">{t("App password")}</option>
                   </select>
                 </label>
@@ -245,11 +212,7 @@ export function AccountsDialog({
                       <summary>{t("Advanced")}</summary>
                       <label className="mt-3">
                         {t("Server")}
-                        <input
-                          name="origin"
-                          defaultValue="https://bsky.social"
-                          required
-                        />
+                        <input name="origin" defaultValue="https://bsky.social" required />
                       </label>
                     </details>
                     <p className="text-xs text-muted-foreground">
@@ -264,9 +227,7 @@ export function AccountsDialog({
             {platform === "twitter" && (
               <>
                 {loadingProfiles ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("Loading profiles…")}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t("Loading profiles…")}</p>
                 ) : profiles.length ? (
                   <label>
                     {t("Relay profile")}
@@ -278,9 +239,7 @@ export function AccountsDialog({
                   </label>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    {t(
-                      "No relay profiles found. Configure TWITTER_RELAY_BASE_URL on the server.",
-                    )}
+                    {t("No relay profiles found. Configure TWITTER_RELAY_BASE_URL on the server.")}
                   </p>
                 )}
               </>
@@ -297,9 +256,7 @@ export function AccountsDialog({
                 <ArrowLeft />
                 {t("Back")}
               </Button>
-              <Button
-                disabled={busy || (platform === "twitter" && !profiles.length)}
-              >
+              <Button disabled={busy || (platform === "twitter" && !profiles.length)}>
                 {busy ? <LoaderCircle className="animate-spin" /> : <Check />}
                 {t("Connect")}
               </Button>

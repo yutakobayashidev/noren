@@ -1,11 +1,6 @@
 // Port of Flare's MisskeyDataSource note/timeline/reaction responsibilities.
 import type { StoredAccount } from "../store";
-import type {
-  SocialPost,
-  FeedSource,
-  FeedPage,
-  Notification,
-} from "../../src/domain/model";
+import type { SocialPost, FeedSource, FeedPage, Notification } from "../../src/domain/model";
 import { publicJson } from "../http";
 import { webUrl } from "./mastodon";
 export const misskeyRequest = (
@@ -87,9 +82,7 @@ export async function misskeyFeed(
     nextCursor: data.length === 30 ? data.at(-1).id : undefined,
   };
 }
-export async function misskeyNotifications(
-  a: StoredAccount,
-): Promise<Notification[]> {
+export async function misskeyNotifications(a: StoredAccount): Promise<Notification[]> {
   const { data } = await misskeyRequest(a, "i/notifications", { limit: 30 });
   return data
     .filter((n: any) => n.user)

@@ -1,0 +1,6 @@
+{
+  "name": "@flare/plugin-starter",
+  "private": true,
+  "type": "module",
+  "exports": "./action.js"
+}

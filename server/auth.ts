@@ -3,12 +3,7 @@ import { EncryptJWT, jwtDecrypt } from "jose";
 import { randomBytes, createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, join } from "node:path";
-import {
-  Router,
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
+import { Router, type Request, type Response, type NextFunction } from "express";
 
 export type Identity = { sub: string; issuer: string; name: string };
 export function identityKey(identity: Identity) {
@@ -24,9 +19,7 @@ function cookie(req: Request, name: string) {
     ?.slice(name.length + 1);
 }
 export function createAuth() {
-  const origin = new URL(
-    process.env.APP_ORIGIN || `http://localhost:${process.env.PORT || 3000}`,
-  );
+  const origin = new URL(process.env.APP_ORIGIN || `http://localhost:${process.env.PORT || 3000}`);
   const secure = origin.protocol === "https:";
   if (
     !secure &&
@@ -40,21 +33,17 @@ export function createAuth() {
     throw new Error("APP_ORIGIN must use HTTPS outside localhost.");
   const issuer = process.env.OIDC_ISSUER;
   const clientId = process.env.OIDC_CLIENT_ID;
-  const dev =
-    process.env.FLARE_DEV_AUTH === "1" && process.env.NODE_ENV !== "production";
-  const preview =
-    process.env.FLARE_PREVIEW === "1" && process.env.NODE_ENV !== "production";
+  const dev = process.env.FLARE_DEV_AUTH === "1" && process.env.NODE_ENV !== "production";
+  const preview = process.env.FLARE_PREVIEW === "1" && process.env.NODE_ENV !== "production";
   const directory = resolve(process.env.FLARE_DATA_DIR || ".data");
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   const path = join(directory, "session.key");
-  if (!existsSync(path))
-    writeFileSync(path, randomBytes(32), { mode: 0o600, flag: "wx" });
+  if (!existsSync(path)) writeFileSync(path, randomBytes(32), { mode: 0o600, flag: "wx" });
   const key = readFileSync(path);
   let configuration: Promise<oidc.Configuration> | undefined;
   const config = () =>
     (configuration ??= (async () => {
-      if (!issuer || !clientId)
-        throw new Error("Configure OIDC_ISSUER and OIDC_CLIENT_ID.");
+      if (!issuer || !clientId) throw new Error("Configure OIDC_ISSUER and OIDC_CLIENT_ID.");
       const secret = process.env.OIDC_CLIENT_SECRET_FILE
         ? readFileSync(process.env.OIDC_CLIENT_SECRET_FILE, "utf8").trim()
         : process.env.OIDC_CLIENT_SECRET;
@@ -91,9 +80,7 @@ export function createAuth() {
     const value = cookie(req, name);
     if (!value) return null;
     try {
-      return (
-        await jwtDecrypt(value, key, { issuer: origin.origin, audience: name })
-      ).payload;
+      return (await jwtDecrypt(value, key, { issuer: origin.origin, audience: name })).payload;
     } catch {
       return null;
     }
@@ -130,12 +117,7 @@ export function createAuth() {
     const verifier = oidc.randomPKCECodeVerifier();
     const state = oidc.randomState();
     const nonce = oidc.randomNonce();
-    set(
-      res,
-      "flare_flow",
-      await seal({ verifier, state, nonce }, "flare_flow", 600),
-      600,
-    );
+    set(res, "flare_flow", await seal({ verifier, state, nonce }, "flare_flow", 600), 600);
     res.redirect(
       oidc.buildAuthorizationUrl(c, {
         redirect_uri: new URL("/auth/callback", origin).href,
@@ -165,8 +147,7 @@ export function createAuth() {
       },
     );
     const claims = tokens.claims();
-    if (!claims?.sub)
-      throw new Error("The provider did not return an identity.");
+    if (!claims?.sub) throw new Error("The provider did not return an identity.");
     const allowed = process.env.OIDC_ALLOWED_SUBJECTS?.split(",")
       .map((s) => s.trim())
       .filter(Boolean);
@@ -184,23 +165,14 @@ export function createAuth() {
             ? claims.preferred_username
             : "Flare user",
     };
-    set(
-      res,
-      "flare_session",
-      await seal({ user }, "flare_session", 28800),
-      28800,
-    );
+    set(res, "flare_session", await seal({ user }, "flare_session", 28800), 28800);
     res.redirect("/");
   });
   router.post("/logout", (_req, res) => {
     set(res, "flare_session", "", 0);
     res.json({ ok: true });
   });
-  const requireAuth = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     const session = await read(req, "flare_session");
     if (session?.user) {
       res.locals.identity = session.user;
@@ -216,10 +188,7 @@ export function createAuth() {
     } else res.status(401).json({ error: "Sign in to continue." });
   };
   const sameOrigin = (req: Request, res: Response, next: NextFunction) => {
-    if (
-      !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
-      req.headers.origin !== origin.origin
-    ) {
+    if (!["GET", "HEAD", "OPTIONS"].includes(req.method) && req.headers.origin !== origin.origin) {
       res.status(403).json({ error: "Request origin not allowed." });
       return;
     }

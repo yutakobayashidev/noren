@@ -1,0 +1,56 @@
+---
+import { sitePage, clientPage } from "../links";
+import Shell from "../Shell.astro";
+import code from "../../../../packages/plugin-starter/action.js?raw";
+import manifest from "../../../../packages/plugin-starter/manifest.json";
+---
+
+<Shell title="プラグインを作る">
+  <h1>投稿操作を作る</h1>
+  <p>
+    最初のプラグインは、投稿を Markdown
+    の引用に変換します。下のプレビューは本体と同じサンプルコードを使っています。
+  </p>
+  <section class="panel">
+    <label for="sample">サンプル投稿</label>
+    <textarea id="sample">今日はいい天気。</textarea>
+    <button id="run">引用を試す</button>
+    <pre id="output" aria-live="polite"></pre>
+  </section>
+  <h2>1. 雛形をコピーする</h2>
+  <p>
+    リポジトリのルートで実行します。Node.js と pnpm のバージョンは{" "}
+    <code>nix develop</code> で揃います。
+  </p>
+  <pre>cp -R packages/plugin-starter packages/my-quote</pre>
+  <h2>2. 作者と操作を設定する</h2>
+  <p>
+    コピー先の package.json の name を一意にし、manifest.json の
+    id、name、author を変更します。entry は action.js を指定します。
+  </p>
+  <pre>{JSON.stringify(manifest,null,2)}</pre>
+  <p>
+    action.js の入力は、選んだ投稿の本文と元リンクです。copyText
+    の結果を返すと、Flare がテキストの確認とコピーを担当します。
+  </p>
+  <pre>{code}</pre>
+  <h2>3. レジストリから試す</h2>
+  <pre>pnpm install
+pnpm dev</pre>
+  <p>
+    設定の「プラグインを探す」から有効にし、投稿に表示される操作名を押してください。公式配布に含めるには、作成したパッケージと入出力のテストをプルリクエストで提出します。現行版はレビュー後に本体と一緒にビルドする方式です。
+  </p>
+  <a href={clientPage("#page=plugins")}>レジストリに戻る →</a>
+</Shell>
+<script>
+  import run from "../../../../packages/plugin-starter/action.js";
+  const field = document.querySelector<HTMLTextAreaElement>("#sample")!;
+  const output = document.querySelector("#output")!;
+  function preview() {
+    output.textContent = run({
+      post: { text: field.value, url: "https://example.com/posts/1" },
+    }).text;
+  }
+  document.querySelector("#run")!.addEventListener("click", preview);
+  preview();
+</script>

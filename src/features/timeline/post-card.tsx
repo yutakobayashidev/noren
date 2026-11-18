@@ -1,23 +1,11 @@
+import { postActions, EnabledActions } from "../../plugins/post-actions";
 import { t } from "../../lib/i18n";
-import { useState } from "react";
-import {
-  Heart,
-  Repeat2,
-  MessageCircle,
-  Bookmark,
-  ExternalLink,
-  Globe,
-  LoaderCircle,
-} from "lucide-react";
+import { useState, useContext } from "react";
+import { Heart, Repeat2, MessageCircle, Bookmark, ExternalLink, LoaderCircle } from "lucide-react";
 import type { SocialPost } from "../../domain/model";
 import { PlatformIcon, Avatar } from "../../components/platform";
 import { Button } from "../../components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { api, errorMessage } from "../../lib/api";
 export function safeUrl(value?: string) {
   try {
@@ -79,6 +67,8 @@ export function PostCard({
   onSave: (post: SocialPost) => void;
   compact?: boolean;
 }) {
+  const enabledActions = useContext(EnabledActions);
+  const [pluginResult, setPluginResult] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -89,10 +79,10 @@ export function PostCard({
     setBusy(kind);
     setError("");
     try {
-      const result = await api<{ post?: SocialPost; uri?: string }>(
-        "/api/action",
-        { ...post, action: active ? `un${kind}` : kind },
-      );
+      const result = await api<{ post?: SocialPost; uri?: string }>("/api/action", {
+        ...post,
+        action: active ? `un${kind}` : kind,
+      });
       onUpdate(
         result.post ?? {
           ...post,
@@ -146,24 +136,16 @@ export function PostCard({
             </span>
             <time
               dateTime={post.createdAt}
-              title={
-                post.createdAt ? new Date(post.createdAt).toLocaleString() : ""
-              }
+              title={post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}
             >
               {timeAgo(post.createdAt)}
             </time>
           </div>
-          {post.community && (
-            <p className="text-xs text-muted-foreground">{post.community}</p>
-          )}
+          {post.community && <p className="text-xs text-muted-foreground">{post.community}</p>}
           {concealed ? (
             <div className="content-warning">
               <p>{post.contentWarning || t("Sensitive content")}</p>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setRevealed(true)}
-              >
+              <Button size="sm" variant="secondary" onClick={() => setRevealed(true)}>
                 {t("Show content")}
               </Button>
             </div>
@@ -177,9 +159,7 @@ export function PostCard({
                 )}
               </div>
               {!!post.media?.length && (
-                <div
-                  className={`post-media media-${Math.min(2, post.media.length)}`}
-                >
+                <div className={`post-media media-${Math.min(2, post.media.length)}`}>
                   {post.media.map((item, i) =>
                     item.type === "photo" ? (
                       <button
@@ -209,10 +189,7 @@ export function PostCard({
                 </div>
               )}
               {post.quotedPost && (
-                <button
-                  className="quoted-post"
-                  onClick={() => onThread(post.quotedPost!)}
-                >
+                <button className="quoted-post" onClick={() => onThread(post.quotedPost!)}>
                   <strong>{post.quotedPost.author.name}</strong>
                   <p>{post.quotedPost.text}</p>
                 </button>
@@ -225,10 +202,7 @@ export function PostCard({
             </p>
           )}
           <div className="post-actions">
-            <button
-              onClick={() => onThread(post)}
-              aria-label={t("Open conversation")}
-            >
+            <button onClick={() => onThread(post)} aria-label={t("Open conversation")}>
               <MessageCircle size={17} />
               <span>{post.replies || ""}</span>
             </button>
@@ -237,10 +211,7 @@ export function PostCard({
               aria-label={post.reposted ? t("Undo repost") : t("Repost")}
               aria-pressed={!!post.reposted}
               disabled={
-                post.platform === "nostr" ||
-                !!busy ||
-                post.readOnly ||
-                post.accountId === "guest"
+                post.platform === "nostr" || !!busy || post.readOnly || post.accountId === "guest"
               }
               className={post.reposted ? "reposted" : ""}
             >
@@ -256,10 +227,7 @@ export function PostCard({
               aria-label={post.liked ? t("Unlike") : t("Like")}
               aria-pressed={!!post.liked}
               disabled={
-                post.platform === "nostr" ||
-                !!busy ||
-                post.readOnly ||
-                post.accountId === "guest"
+                post.platform === "nostr" || !!busy || post.readOnly || post.accountId === "guest"
               }
               className={post.liked ? "liked" : ""}
             >
@@ -285,6 +253,26 @@ export function PostCard({
             >
               <ExternalLink size={16} />
             </a>
+            {postActions
+              .filter((action) => enabledActions.includes(action.id))
+              .map((action) => (
+                <button
+                  key={action.id}
+                  onClick={async () => {
+                    try {
+                      const run = await action.load();
+                      const result = await run({ post: { text: post.text, url: post.url } });
+                      if (result.kind !== "copyText" || typeof result.text !== "string")
+                        throw new Error("Invalid plugin output");
+                      setPluginResult(result.text);
+                    } catch (e) {
+                      setError(errorMessage(e));
+                    }
+                  }}
+                >
+                  {action.name}
+                </button>
+              ))}
             {!post.readOnly && post.accountId !== "guest" && (
               <button className="reply-label" onClick={() => onReply(post)}>
                 {t("Reply")}
@@ -293,6 +281,34 @@ export function PostCard({
           </div>
         </div>
       </div>
+      <Dialog
+        open={!!pluginResult}
+        onOpenChange={(open) => {
+          if (!open) setPluginResult("");
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>{t("Plugin output")}</DialogTitle>
+          <textarea
+            aria-label={t("Plugin output")}
+            readOnly
+            value={pluginResult}
+            onFocus={(e) => e.target.select()}
+          />
+          <Button
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(pluginResult);
+                setPluginResult("");
+              } catch {
+                setError(t("Select and copy the text"));
+              }
+            }}
+          >
+            {t("Copy")}
+          </Button>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!media} onOpenChange={() => setMedia(null)}>
         <DialogContent className="max-w-5xl bg-black p-2 text-white">
           <DialogTitle className="sr-only">{t("Post image")}</DialogTitle>
@@ -303,9 +319,7 @@ export function PostCard({
           {media && (
             <img
               src={media}
-              alt={
-                post.media?.find((m) => m.url === media)?.alt || t("Post image")
-              }
+              alt={post.media?.find((m) => m.url === media)?.alt || t("Post image")}
               className="max-h-[80dvh] w-full object-contain"
             />
           )}

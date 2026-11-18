@@ -16,26 +16,21 @@ export function blueskyMetadata() {
     process.env.APP_ORIGIN || "http://localhost:" + (process.env.PORT || 3000),
   );
   const callback = new URL("/api/connect/bluesky/callback", origin).href;
-  const loopback =
-    origin.protocol === "http:" && origin.hostname === "127.0.0.1";
+  const loopback = origin.protocol === "http:" && origin.hostname === "127.0.0.1";
   if (!loopback && origin.protocol !== "https:")
     throw new Error(
       "Bluesky OAuth requires an HTTPS app URL or http://127.0.0.1 for local development.",
     );
   return {
     client_id: loopback
-      ? "http://localhost?" +
-        new URLSearchParams({ redirect_uri: callback, scope })
+      ? "http://localhost?" + new URLSearchParams({ redirect_uri: callback, scope })
       : new URL("/bluesky-client.json", origin).href,
     client_name: "Flare Web",
     client_uri: origin.origin,
     redirect_uris: [callback] as [string],
     scope,
     application_type: loopback ? ("native" as const) : ("web" as const),
-    grant_types: ["authorization_code", "refresh_token"] as [
-      "authorization_code",
-      "refresh_token",
-    ],
+    grant_types: ["authorization_code", "refresh_token"] as ["authorization_code", "refresh_token"],
     response_types: ["code"] as ["code"],
     dpop_bound_access_tokens: true as const,
     token_endpoint_auth_method: "none" as const,
@@ -52,8 +47,7 @@ export function blueskyOAuth(store: AccountStore) {
     fetch: publicFetch,
     stateStore: {
       async set(key, value) {
-        for (const [id, s] of states)
-          if (s.expires < Date.now()) states.delete(id);
+        for (const [id, s] of states) if (s.expires < Date.now()) states.delete(id);
         if (states.size >= 32) throw new Error("Too many pending sign-ins.");
         states.set(key, { value, expires: Date.now() + 600000 });
       },
@@ -86,8 +80,7 @@ export function blueskyOAuth(store: AccountStore) {
       },
       async del(did) {
         const id = "bluesky:" + did;
-        if (store.all().some((a) => a.id === id && a.oauthSession))
-          store.remove(id);
+        if (store.all().some((a) => a.id === id && a.oauthSession)) store.remove(id);
       },
     },
   });

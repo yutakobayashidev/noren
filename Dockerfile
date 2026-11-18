@@ -3,6 +3,8 @@ WORKDIR /app
 RUN npm install -g pnpm@10.34.5
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY patches ./patches
+COPY apps ./apps
+COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 COPY tsconfig.json vite.config.ts index.html ./
 COPY public ./public

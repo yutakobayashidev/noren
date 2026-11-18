@@ -1,11 +1,6 @@
 // TypeScript port of Flare social/mastodon MastodonDataSource, MastodonLoader and status mapping.
 import sanitizeHtml from "sanitize-html";
-import type {
-  SocialPost,
-  FeedSource,
-  FeedPage,
-  Notification,
-} from "../../src/domain/model";
+import type { SocialPost, FeedSource, FeedPage, Notification } from "../../src/domain/model";
 import type { StoredAccount } from "../store";
 import { publicJson } from "../http";
 
@@ -13,9 +8,7 @@ export function webUrl(value: unknown): string | undefined {
   if (typeof value !== "string") return;
   try {
     const u = new URL(value);
-    return ["https:", "http:"].includes(u.protocol) &&
-      !u.username &&
-      !u.password
+    return ["https:", "http:"].includes(u.protocol) && !u.username && !u.password
       ? u.href
       : undefined;
   } catch {
@@ -26,23 +19,11 @@ export function mapMastodon(raw: any, account: StoredAccount): SocialPost {
   const post = raw.reblog ?? raw;
   const author = (user: any) => ({
     name: user.display_name || user.username,
-    handle: user.acct.includes("@")
-      ? user.acct
-      : `${user.acct}@${new URL(account.origin).host}`,
+    handle: user.acct.includes("@") ? user.acct : `${user.acct}@${new URL(account.origin).host}`,
     avatarUrl: webUrl(user.avatar),
   });
   const html = sanitizeHtml(post.content, {
-    allowedTags: [
-      "p",
-      "br",
-      "a",
-      "span",
-      "strong",
-      "em",
-      "code",
-      "pre",
-      "blockquote",
-    ],
+    allowedTags: ["p", "br", "a", "span", "strong", "em", "code", "pre", "blockquote"],
     allowedAttributes: { a: ["href", "rel", "target"] },
     allowedSchemes: ["https", "http"],
     allowProtocolRelative: false,
@@ -75,13 +56,9 @@ export function mapMastodon(raw: any, account: StoredAccount): SocialPost {
     liked: post.favourited,
     reposted: post.reblogged,
     media: (post.media_attachments ?? [])
-      .filter(
-        (m: any) =>
-          webUrl(m.url) && ["image", "video", "gifv"].includes(m.type),
-      )
+      .filter((m: any) => webUrl(m.url) && ["image", "video", "gifv"].includes(m.type))
       .map((m: any) => ({
-        type:
-          m.type === "image" ? "photo" : m.type === "gifv" ? "gif" : "video",
+        type: m.type === "image" ? "photo" : m.type === "gifv" ? "gif" : "video",
         url: m.url,
         previewUrl: webUrl(m.preview_url),
         alt: m.description ?? "",
@@ -110,8 +87,7 @@ export function nextCursor(link: string | null, origin: string, path: string) {
     try {
       const u = new URL(match[1]);
       const id = u.searchParams.get("max_id");
-      if (u.origin === origin && u.pathname === path && id && /^\d+$/.test(id))
-        return id;
+      if (u.origin === origin && u.pathname === path && id && /^\d+$/.test(id)) return id;
     } catch {
       /* Ignore malformed continuations. */
     }
@@ -123,16 +99,13 @@ export async function mastodonFeed(
   cursor?: string,
 ): Promise<FeedPage> {
   const params = new URLSearchParams({ limit: "30" });
-  let path = account.token
-    ? "/api/v1/timelines/home"
-    : "/api/v1/trends/statuses";
+  let path = account.token ? "/api/v1/timelines/home" : "/api/v1/trends/statuses";
   if (!account.token && source.kind === "home") {
     params.set("offset", cursor || "0");
     const { data } = await mastodonRequest(account, `${path}?${params}`);
     return {
       posts: data.map((p: any) => mapMastodon(p, account)),
-      nextCursor:
-        data.length === 30 ? String(Number(cursor || 0) + 30) : undefined,
+      nextCursor: data.length === 30 ? String(Number(cursor || 0) + 30) : undefined,
     };
   }
   if (source.kind === "search") {
@@ -152,10 +125,7 @@ export async function mastodonFeed(
       path = `/api/v1/accounts/${data.id}/statuses`;
     }
   }
-  const { data, response } = await mastodonRequest(
-    account,
-    `${path}?${params}`,
-  );
+  const { data, response } = await mastodonRequest(account, `${path}?${params}`);
   const statuses = source.kind === "search" ? data.statuses : data;
   return {
     posts: statuses.map((p: any) => mapMastodon(p, account)),
@@ -167,13 +137,8 @@ export async function mastodonFeed(
         : nextCursor(response.headers.get("link"), account.origin, path),
   };
 }
-export async function mastodonNotifications(
-  account: StoredAccount,
-): Promise<Notification[]> {
-  const { data } = await mastodonRequest(
-    account,
-    "/api/v1/notifications?limit=30",
-  );
+export async function mastodonNotifications(account: StoredAccount): Promise<Notification[]> {
+  const { data } = await mastodonRequest(account, "/api/v1/notifications?limit=30");
   return data.map((n: any) => ({
     id: n.id,
     reason: n.type,

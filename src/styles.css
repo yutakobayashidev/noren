@@ -16,8 +16,7 @@
   --color-ring: var(--primary);
   --color-destructive: var(--destructive);
   --font-sans:
-    "Inter", "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+    "Inter", "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 :root {
   --background: #f2f1f8;
@@ -682,11 +681,7 @@ textarea:focus {
   align-items: center;
   justify-content: center;
   gap: 25px;
-  background: radial-gradient(
-    ellipse at 50% 10%,
-    var(--secondary),
-    transparent 70%
-  );
+  background: radial-gradient(ellipse at 50% 10%, var(--secondary), transparent 70%);
 }
 .login-card {
   width: 440px;
