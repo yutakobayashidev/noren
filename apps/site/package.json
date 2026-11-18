@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
-    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build"
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "build:worker": "node build-worker.mjs",
+    "deploy": "pnpm build:worker && pnpm dlx wrangler@4.164.0 deploy"
   },
   "devDependencies": {
     "astro": "^6.0.0"
