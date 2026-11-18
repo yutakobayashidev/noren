@@ -9,7 +9,7 @@ export const manifestV2 = z
     action: identifier,
     author: label,
     name: z.object({ en: label, ja: label, zh: label }),
-    permissions: z.array(z.enum(["post.text", "post.url"])),
+    permissions: z.array(z.enum(["post.text", "post.url", "model.plamo"])),
     entry: z.literal("./action.js"),
   })
   .strict();

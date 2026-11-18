@@ -201,5 +201,36 @@
   "Copy": ["コピー", "复制"],
   "Plugin output": ["プラグインの結果", "插件结果"],
   "Select and copy the text": ["テキストを選択してコピーしてください", "请选择并复制文本"],
-  "Post action": ["投稿操作", "帖子操作"]
+  "Post action": ["投稿操作", "帖子操作"],
+  "Built with PLaMo. Translate on this device using WebGPU.": [
+    "Built with PLaMo。WebGPU を使い、この端末で投稿を翻訳します。",
+    "Built with PLaMo。使用 WebGPU 在此设备上翻译帖子。"
+  ],
+  "Model license": ["モデルのライセンス", "模型许可"],
+  "Model removed": ["モデルを削除しました", "模型已删除"],
+  "Could not remove model": ["モデルを削除できませんでした", "无法删除模型"],
+  "Remove downloaded model": ["取得したモデルを削除", "删除已下载的模型"],
+  "WebGPU with shader-f16 is required on HTTPS or localhost.": [
+    "翻訳には HTTPS または localhost と、shader-f16 対応の WebGPU が必要です。",
+    "需要 HTTPS 或 localhost 以及支持 shader-f16 的 WebGPU。"
+  ],
+  "Download PLaMo 3 Translate (573 MB) from Hugging Face to this device?": [
+    "Hugging Face から PLaMo 3 Translate（573 MB）をこの端末に保存しますか？",
+    "从 Hugging Face 下载 PLaMo 3 Translate（573 MB）到此设备？"
+  ],
+  "Download cancelled": ["ダウンロードをキャンセルしました", "下载已取消"],
+  "Translation timed out": ["翻訳がタイムアウトしました", "翻译超时"],
+  "Translation failed": ["翻訳できませんでした", "翻译失败"],
+  "WebGPU model loading failed": [
+    "WebGPU へのモデル読み込みに失敗しました",
+    "无法将模型载入 WebGPU"
+  ],
+  "Model download required": ["モデルを取得してください", "请下载模型"],
+  "Model download failed": ["モデルを取得できませんでした", "模型下载失败"],
+  "Model verification failed": ["モデルの検証に失敗しました", "模型校验失败"],
+  "Unsupported post text": ["この本文は翻訳できません", "不支持此帖子文本"],
+  "Uses": ["使用する機能", "使用权限"],
+  "post.text": ["選択した投稿の本文", "所选帖子的正文"],
+  "post.url": ["投稿の元リンク", "帖子的原始链接"],
+  "model.plamo": ["端末内の PLaMo 翻訳", "设备上的 PLaMo 翻译"]
 }

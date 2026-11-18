@@ -69,10 +69,12 @@ export function PostCard({
 }) {
   const enabledActions = useContext(EnabledActions);
   const [pluginResult, setPluginResult] = useState("");
+  const [runningPlugin, setRunningPlugin] = useState("");
   const job = useRef<AbortController | null>(null);
   const [inline, setInline] = useState<{ grant: string; text: string } | null>(null);
   useEffect(() => {
     setInline(null);
+    setRunningPlugin("");
     setPluginResult("");
     return () => job.current?.abort();
   }, [enabledActions, post.key, post.accountId, post.text]);
@@ -271,7 +273,13 @@ export function PostCard({
                 <button
                   key={action.id}
                   onClick={async () => {
+                    if (runningPlugin === action.grant) {
+                      job.current?.abort();
+                      setRunningPlugin("");
+                      return;
+                    }
                     job.current?.abort();
+                    setRunningPlugin(action.grant);
                     const controller = new AbortController();
                     job.current = controller;
                     try {
@@ -287,10 +295,12 @@ export function PostCard({
                     } catch (e) {
                       if (controller.signal.aborted) return;
                       setError(errorMessage(e));
+                    } finally {
+                      if (job.current === controller) setRunningPlugin("");
                     }
                   }}
                 >
-                  {action.name}
+                  {runningPlugin === action.grant ? t("Cancel") : action.name}
                 </button>
               ))}
             {!post.readOnly && post.accountId !== "guest" && (

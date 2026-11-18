@@ -8,7 +8,7 @@ addEventListener("message", async function start(event) {
   try {
     const url = code => URL.createObjectURL(new Blob([code], {type:"text/javascript"}));
 
-    const bootstrap = 'const exports = {};\\n' + event.data.source + '\\nconst run = exports.default; self.onmessage = async event => { try { const {kind,text} = await run(event.data); if (!["inlineText","copyText"].includes(kind) || typeof text !== "string" || text.length > 65536) throw Error(); self.postMessage({kind,text}); } catch { self.postMessage(null); } };';
+    const bootstrap = 'const exports = {};\\n' + event.data.source + '\\nconst run = exports.default; self.onmessage = async event => { try { const {kind,text} = await run(event.data); if (!["inlineText","copyText","translate"].includes(kind) || typeof text !== "string" || text.length > 65536) throw Error(); self.postMessage({kind,text}); } catch { self.postMessage(null); } };';
     const worker = new Worker(url(bootstrap));
     worker.onmessage = e => { port.postMessage(e.data); worker.terminate(); };
     worker.onerror = () => { port.postMessage(null); worker.terminate(); };
@@ -16,7 +16,7 @@ addEventListener("message", async function start(event) {
   } catch { port.postMessage(null); }
 });
 </script>`;
-export type ActionResult = { kind: "copyText" | "inlineText"; text: string };
+export type ActionResult = { kind: "copyText" | "inlineText" | "translate"; text: string };
 export function runIsolated(
   source: string,
   input: unknown,
@@ -48,7 +48,7 @@ export function runIsolated(
       stop();
       if (
         !data ||
-        !["inlineText", "copyText"].includes(data.kind) ||
+        !["inlineText", "copyText", "translate"].includes(data.kind) ||
         typeof data.text !== "string" ||
         data.text.length > 65536
       )

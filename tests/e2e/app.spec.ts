@@ -156,3 +156,22 @@ test("sandboxed actions have no DOM, origin storage or network access", async ({
   });
   expect(JSON.parse(result.text)).toEqual(["undefined", false, false]);
 });
+
+test("PLaMo checks device support before any model download", async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, "gpu", { value: undefined }));
+  const downloads: string[] = [];
+  await page.route("https://huggingface.co/**", (route) => {
+    downloads.push(route.request().url());
+    return route.abort();
+  });
+  await fixture(page);
+  await page.goto("/#page=plugins");
+  const plugin = page
+    .locator("article")
+    .filter({ has: page.getByRole("heading", { name: "Translate with PLaMo" }) });
+  await plugin.getByRole("button", { name: "Enable plugin" }).click();
+  await page.goto("/");
+  await page.getByRole("button", { name: "Translate with PLaMo" }).click();
+  await expect(page.getByRole("alert")).toContainText("shader-f16");
+  expect(downloads).toEqual([]);
+});

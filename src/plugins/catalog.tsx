@@ -24,6 +24,7 @@ export function PluginCatalog({
   enabled: boolean;
   onEnable: (value: boolean) => void;
 }) {
+  const [modelStatus, setModelStatus] = useState("");
   const [query, setQuery] = useState("");
   const [activeOnly, setActiveOnly] = useState(false);
   const matches =
@@ -116,6 +117,34 @@ export function PluginCatalog({
           <div>
             <small>{t("Post action")}</small>
             <h2>{a.name}</h2>
+            {a.permissions && (
+              <p>
+                {t("Uses")} · {a.permissions.map(t).join(" · ")}
+              </p>
+            )}
+            {a.id === "flare.plamo" && (
+              <>
+                <p>{t("Built with PLaMo. Translate on this device using WebGPU.")}</p>
+                <a href="/runtime/sakutto-1.7.3/licenses/PLaMo-Community-License-en.txt">
+                  {t("Model license")}
+                </a>{" "}
+                ·{" "}
+                <button
+                  onClick={async () => {
+                    try {
+                      const { removeModel } = await import("./plamo/client");
+                      await removeModel();
+                      setModelStatus(t("Model removed"));
+                    } catch {
+                      setModelStatus(t("Could not remove model"));
+                    }
+                  }}
+                >
+                  {t("Remove downloaded model")}
+                </button>
+                <span role="status">{modelStatus}</span>
+              </>
+            )}
             <p>
               {t("Developer")} · {a.author}
             </p>
