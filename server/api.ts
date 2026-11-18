@@ -1,3 +1,4 @@
+import { connectionRouter } from "./connections";
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
@@ -61,12 +62,10 @@ export function apiRouter() {
           req.body?.accountId === "guest")
       )
     ) {
-      res
-        .status(403)
-        .json({
-          error:
-            "This preview is read-only. Sign in with OIDC to connect accounts.",
-        });
+      res.status(403).json({
+        error:
+          "This preview is read-only. Sign in with OIDC to connect accounts.",
+      });
       return;
     }
     next();
@@ -83,6 +82,7 @@ export function apiRouter() {
     res.locals.store = store;
     next();
   });
+  router.use("/connect", connectionRouter());
   router.get("/accounts", (_req, res) =>
     res.json({ accounts: res.locals.store.public(), guest }),
   );

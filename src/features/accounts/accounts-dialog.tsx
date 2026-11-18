@@ -24,12 +24,14 @@ export function AccountsDialog({
   onChange: () => void;
 }) {
   const [platform, setPlatform] = useState<Platform | null>(null);
+  const [mastodonMethod, setMastodonMethod] = useState("oauth");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [profiles, setProfiles] = useState<string[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
   useEffect(() => {
     if (open) {
+      setMastodonMethod("oauth");
       setPlatform(null);
       setError("");
     }
@@ -58,6 +60,14 @@ export function AccountsDialog({
     setError("");
     const values = Object.fromEntries(new FormData(event.currentTarget));
     try {
+      if (platform === "mastodon" && mastodonMethod === "oauth") {
+        const { url } = await api<{ url: string }>(
+          "/api/connect/mastodon",
+          values,
+        );
+        window.location.assign(url);
+        return;
+      }
       await api("/api/accounts", { platform, ...values });
       onChange();
       setPlatform(null);
@@ -153,18 +163,28 @@ export function AccountsDialog({
                   />
                 </label>
                 <label>
-                  Access token
-                  <input
-                    name="token"
-                    type="password"
-                    required
-                    autoComplete="off"
-                  />
+                  Sign-in method
+                  <select
+                    value={mastodonMethod}
+                    onChange={(event) => setMastodonMethod(event.target.value)}
+                  >
+                    <option value="oauth">
+                      Authorize on server (recommended)
+                    </option>
+                    <option value="token">Use an existing access token</option>
+                  </select>
                 </label>
-                <p className="text-xs text-muted-foreground">
-                  Create a token in your server’s Preferences → Development with
-                  read, write and follow permissions.
-                </p>
+                {mastodonMethod === "token" && (
+                  <label>
+                    Access token
+                    <input
+                      name="token"
+                      type="password"
+                      autoComplete="off"
+                      required
+                    />
+                  </label>
+                )}
               </>
             )}
             {platform === "bluesky" && (
