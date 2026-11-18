@@ -1,3 +1,4 @@
+import { PluginCatalog } from "./plugins/catalog";
 import { webMcpSearch } from "./plugins/webmcp";
 import { t, preference, changeLanguage } from "./lib/i18n";
 import { useEffect, useState } from "react";
@@ -248,15 +249,17 @@ function Workspace({ session }: { session: Session }) {
         ? { kind: "user", target: route.profile }
         : (custom?.source ?? { kind: "home" });
   const title =
-    route.page === "notifications"
-      ? t("Notifications")
-      : route.page === "discover"
-        ? t("Discover")
-        : route.page === "saved"
-          ? t("Saved posts")
-          : route.page === "profile"
-            ? `@${route.profile}`
-            : t("Home");
+    route.page === "plugins"
+      ? t("Browse plugins")
+      : route.page === "notifications"
+        ? t("Notifications")
+        : route.page === "discover"
+          ? t("Discover")
+          : route.page === "saved"
+            ? t("Saved posts")
+            : route.page === "profile"
+              ? `@${route.profile}`
+              : t("Home");
   const nav = [
     { id: "home", label: t("Home"), icon: Home },
     { id: "notifications", label: t("Notifications"), icon: Bell },
@@ -328,7 +331,7 @@ function Workspace({ session }: { session: Session }) {
               size={34}
             />
           </button>
-          {route.page === "profile" && (
+          {(route.page === "profile" || route.page === "plugins") && (
             <Button
               variant="ghost"
               size="icon"
@@ -508,7 +511,12 @@ function Workspace({ session }: { session: Session }) {
           className="feed-scroll"
           key={route.page + route.tab + route.query + route.profile}
         >
-          {!accountsReady ? (
+          {route.page === "plugins" ? (
+            <PluginCatalog
+              enabled={webMcpEnabled}
+              onEnable={setWebMcpEnabled}
+            />
+          ) : !accountsReady ? (
             <div className="loading-state" role="status">
               <LoaderCircle className="animate-spin" />
               {t("Opening your timelines…")}
@@ -636,14 +644,15 @@ function Workspace({ session }: { session: Session }) {
           <div className="mt-6 space-y-6">
             <section>
               <h2 className="settings-label">{t("Plugins")}</h2>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={webMcpEnabled}
-                  onChange={(event) => setWebMcpEnabled(event.target.checked)}
-                />
-                {t("WebMCP search in Discover")}
-              </label>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSettingsOpen(false);
+                  navigate({ page: "plugins" });
+                }}
+              >
+                {t("Browse plugins")}
+              </Button>
             </section>
             <section>
               <label>

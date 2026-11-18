@@ -195,5 +195,14 @@
   "WebMCP search in Discover": [
     "「見つける」で WebMCP 検索を有効にする",
     "在「发现」中启用 WebMCP 搜索"
+  ],
+  "Browse plugins": ["プラグインを探す", "浏览插件"],
+  "Find plugins": ["プラグインを検索", "搜索插件"],
+  "Enable plugin": ["有効にする", "启用插件"],
+  "Disable plugin": ["無効にする", "停用插件"],
+  "No matching plugins": ["一致するプラグインはありません", "未找到匹配的插件"],
+  "Let a browser assistant open a search across your connected accounts while Discover is open.": [
+    "「見つける」を開いている間、ブラウザのアシスタントから接続済みアカウントの投稿を検索できます。",
+    "在「发现」页面，浏览器助手可以搜索已连接账号中的帖子。"
   ]
 }
