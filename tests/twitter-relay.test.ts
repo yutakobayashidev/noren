@@ -20,6 +20,7 @@ test("connects the selected relay profile using its recorded Viewer request", as
             user_results: {
               result: {
                 rest_id: "42",
+                avatar: { image_url: "https://pbs.twimg.com/profile_images/example.jpg" },
                 core: { screen_name: "example", name: "Example" },
               },
             },
@@ -41,6 +42,7 @@ test("connects the selected relay profile using its recorded Viewer request", as
     });
     expect(await client.getCurrentUser()).toEqual({
       success: true,
+      avatarUrl: "https://pbs.twimg.com/profile_images/example.jpg",
       user: { id: "42", username: "example", name: "Example" },
     });
     const [[catalog], [viewer, options]] = request.mock.calls;

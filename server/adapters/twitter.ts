@@ -3,8 +3,9 @@ import { mapTwitterPost } from "../imported/twitter";
 import type { StoredAccount } from "../store";
 import type { FeedPage, FeedSource, SocialPost } from "../../src/domain/model";
 import { jsonRequest } from "../http";
+import { webUrl } from "./mastodon";
 class RelayTwitterClient extends TwitterClient {
-  override async getCurrentUser(): Promise<CurrentUserResult> {
+  override async getCurrentUser(): Promise<CurrentUserResult & { avatarUrl?: string }> {
     const options = { headers: this.getHeaders(), signal: AbortSignal.timeout(20000) };
     const catalog = await fetch(new URL("/requests.ndjson", this.relayBaseUrl), options);
     if (catalog.status === 404) return super.getCurrentUser();
@@ -32,6 +33,7 @@ class RelayTwitterClient extends TwitterClient {
       this.clientUserId = user.rest_id;
       return {
         success: true,
+        avatarUrl: webUrl(user.avatar?.image_url ?? user.legacy?.profile_image_url_https),
         user: {
           id: user.rest_id,
           username,
@@ -42,7 +44,7 @@ class RelayTwitterClient extends TwitterClient {
     return super.getCurrentUser();
   }
 }
-const clients = new Map<string, TwitterClient>();
+const clients = new Map<string, RelayTwitterClient>();
 export function twitterClient(account: StoredAccount) {
   const existing = clients.get(account.profile!);
   if (existing) return existing;

@@ -41,6 +41,7 @@ export function Avatar({ name, url, size = 42 }: { name: string; url?: string; s
     >
       {url ? (
         <img
+          key={url}
           src={url}
           alt=""
           loading="lazy"

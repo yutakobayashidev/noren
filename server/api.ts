@@ -82,6 +82,17 @@ export function apiRouter() {
   router.use("/connect/bluesky", blueskyConnectionRouter());
   router.use("/connect", connectionRouter());
   router.get("/accounts", (_req, res) => res.json({ accounts: res.locals.store.public(), guest }));
+  router.get("/accounts/:id/avatar", async (req, res) => {
+    const store: AccountStore = res.locals.store;
+    const account = store.get(req.params.id);
+    if (account.platform !== "twitter") return res.sendStatus(404);
+    if (account.avatarUrl) return res.redirect(account.avatarUrl);
+    const viewer = await twitterClient(account).getCurrentUser();
+    if (!viewer.avatarUrl || viewer.user?.username.toLowerCase() !== account.handle.toLowerCase())
+      return res.sendStatus(404);
+    store.setAvatar(account, viewer.avatarUrl);
+    res.redirect(viewer.avatarUrl);
+  });
   router.get("/twitter/profiles", async (_req, res) =>
     res.json({ profiles: await twitterProfiles() }),
   );
@@ -163,6 +174,7 @@ export function apiRouter() {
         ...account,
         displayName: result.user.name,
         handle: result.user.username,
+        avatarUrl: result.avatarUrl,
       };
     }
     store.put(account);

@@ -43,7 +43,11 @@ export class AccountStore {
       platform,
       displayName,
       handle,
-      avatarUrl,
+      avatarUrl:
+        avatarUrl ??
+        (platform === "twitter"
+          ? "/api/accounts/" + encodeURIComponent(id) + "/avatar"
+          : undefined),
       origin,
       canPost,
     }));
@@ -55,6 +59,12 @@ export class AccountStore {
   }
   put(account: StoredAccount) {
     this.values = [...this.values.filter((item) => item.id !== account.id), account];
+    this.save();
+  }
+  setAvatar(account: StoredAccount, avatarUrl: string) {
+    const index = this.values.indexOf(account);
+    if (index < 0) return;
+    this.values[index] = { ...account, avatarUrl };
     this.save();
   }
   remove(id: string) {
