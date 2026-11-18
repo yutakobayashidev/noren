@@ -1,4 +1,4 @@
-{ lib, stdenv, nodejs_24, pnpm_10, fetchPnpmDeps, pnpmConfigHook, makeWrapper, plugins ? [] }:
+{ lib, stdenv, nodejs_24, pnpm_10, fetchPnpmDeps, pnpmConfigHook, makeWrapper, esbuild, plugins ? [] }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "noren";
   version = "0.1.0";
@@ -9,7 +9,7 @@ stdenv.mkDerivation (finalAttrs: {
       !(builtins.elem name [ ".git" "node_modules" "dist" ".data" ".playwright-mcp" "test-results" "playwright-report" ".astro" ".agents" ".aws" ".codex" "z-ai" ])
       && !(lib.hasPrefix ".env" name);
   };
-  nativeBuildInputs = [ nodejs_24 pnpm_10 pnpmConfigHook makeWrapper ];
+  nativeBuildInputs = [ nodejs_24 pnpm_10 pnpmConfigHook makeWrapper esbuild ];
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
     pnpm = pnpm_10;
@@ -26,14 +26,18 @@ stdenv.mkDerivation (finalAttrs: {
   buildPhase = ''
     runHook preBuild
     pnpm build
+    esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=noren-server.mjs
     runHook postBuild
   '';
   installPhase = ''
     runHook preInstall
     mkdir -p $out/lib/flare-web $out/bin
-    cp -r dist server src apps packages package.json node_modules $out/lib/flare-web/
+    runtimeDeps=$(mktemp -d)
+    cp -r package.json pnpm-lock.yaml pnpm-workspace.yaml patches "$runtimeDeps/"
+    pnpm --dir "$runtimeDeps" install --prod --offline --frozen-lockfile --ignore-scripts
+    cp -r dist noren-server.mjs package.json "$runtimeDeps/node_modules" $out/lib/flare-web/
     makeWrapper ${nodejs_24}/bin/node $out/bin/noren \
-      --add-flags "$out/lib/flare-web/node_modules/tsx/dist/cli.mjs $out/lib/flare-web/server/index.ts" \
+      --add-flags "$out/lib/flare-web/noren-server.mjs" \
       --set NODE_ENV production \
       --chdir "$out/lib/flare-web" \
       --run 'export FLARE_DATA_DIR="''${FLARE_DATA_DIR:-''${XDG_STATE_HOME:-$HOME/.local/state}/flare-web}"'
