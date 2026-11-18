@@ -1,0 +1,85 @@
+services:
+  flare-web:
+    build: .
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:3101:3000"
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3101}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_TOKEN_AUTH_METHOD: ${OIDC_TOKEN_AUTH_METHOD:-client_secret_post}
+      OIDC_SCOPE: ${OIDC_SCOPE:-openid profile email}
+      OIDC_ALLOWED_SUBJECTS: ${OIDC_ALLOWED_SUBJECTS:-}
+      TWITTER_RELAY_BASE_URL: http://twitter-browser:3000
+    depends_on:
+      twitter-safe-relay:
+        condition: service_healthy
+    volumes:
+      - flare-data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+  twitter-profile-init:
+    image: alpine:3.23
+    restart: "no"
+    command:
+      - sh
+      - -ec
+      - >-
+        rm -f /profile/SingletonLock /profile/SingletonSocket /profile/SingletonCookie /profile/DevToolsActivePort;
+        chown -R 1000:0 /profile;
+        chmod -R g+rwX /profile
+    volumes:
+      - twitter-profile:/profile
+  twitter-browser:
+    image: kasmweb/chrome:1.18.0@sha256:ae956514c4d034673423c46317a8c5994fe3517b34662155d467e6648571d195
+    restart: unless-stopped
+    depends_on:
+      twitter-profile-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:6901:6901"
+    environment:
+      VNC_PW: ${TWITTER_BROWSER_PASSWORD:?Set TWITTER_BROWSER_PASSWORD in .env}
+      APP_ARGS: >-
+        --start-maximized --user-data-dir=/home/kasm-user/chrome-profile
+        --password-store=basic --remote-debugging-port=9222
+    volumes:
+      - twitter-profile:/home/kasm-user/chrome-profile
+    shm_size: "2gb"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--fail",
+          "--silent",
+          "http://127.0.0.1:9222/json/version",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+  twitter-safe-relay:
+    image: ghcr.io/fa0311/twitter_api_safe_relay:0.4.3-relay-slim@sha256:9b8547697662768cb9c3ef30486dbaf8c3b9bb6d7bb89683add27874f69e52d8
+    restart: unless-stopped
+    depends_on:
+      twitter-browser:
+        condition: service_healthy
+    network_mode: "service:twitter-browser"
+    volumes:
+      - ./docker/twitter-relay.json:/app/settings.json:ro
+    healthcheck:
+      test:
+        ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+volumes:
+  flare-data:
+  twitter-profile:
