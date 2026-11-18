@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import { useEffect, useRef } from "react";
 import { LoaderCircle, Check, RefreshCw } from "lucide-react";
 import type { Account, FeedSource, SocialPost } from "../../domain/model";
@@ -59,7 +60,7 @@ export function Timeline({
             onClick={() => void feed.loadMore()}
           >
             <RefreshCw />
-            Retry
+            {t("Retry")}
           </Button>
         </div>
       ))}
@@ -80,14 +81,14 @@ export function Timeline({
       {feed.loading && (
         <div className="loading-state" role="status">
           <LoaderCircle className="animate-spin" size={22} />
-          <span>Loading posts…</span>
+          <span>{t("Loading posts…")}</span>
         </div>
       )}
       {!feed.loading && !feed.posts.length && !feed.errors.length && (
         <div className="empty-state">
           <Check size={28} />
-          <h2>Nothing here yet</h2>
-          <p>New posts will appear here.</p>
+          <h2>{t("Nothing here yet")}</h2>
+          <p>{t("New posts will appear here.")}</p>
         </div>
       )}
       {feed.hasMore && !feed.errors.length ? (
@@ -97,12 +98,12 @@ export function Timeline({
             disabled={feed.loading}
             onClick={() => void feed.loadMore()}
           >
-            Load more
+            {t("Load more")}
           </Button>
         </div>
       ) : (
         !!feed.posts.length && (
-          <p className="end-of-feed">You’re all caught up</p>
+          <p className="end-of-feed">{t("You’re all caught up")}</p>
         )
       )}
     </>

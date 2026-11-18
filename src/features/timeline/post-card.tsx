@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import { useState } from "react";
 import {
   Heart,
@@ -157,13 +158,13 @@ export function PostCard({
           )}
           {concealed ? (
             <div className="content-warning">
-              <p>{post.contentWarning || "Sensitive content"}</p>
+              <p>{post.contentWarning || t("Sensitive content")}</p>
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={() => setRevealed(true)}
               >
-                Show content
+                {t("Show content")}
               </Button>
             </div>
           ) : (
@@ -201,7 +202,7 @@ export function PostCard({
                         controls
                         playsInline
                         preload="none"
-                        aria-label={item.alt || "Post video"}
+                        aria-label={item.alt || t("Post video")}
                       />
                     ),
                   )}
@@ -226,14 +227,14 @@ export function PostCard({
           <div className="post-actions">
             <button
               onClick={() => onThread(post)}
-              aria-label="Open conversation"
+              aria-label={t("Open conversation")}
             >
               <MessageCircle size={17} />
               <span>{post.replies || ""}</span>
             </button>
             <button
               onClick={() => action("repost")}
-              aria-label={post.reposted ? "Undo repost" : "Repost"}
+              aria-label={post.reposted ? t("Undo repost") : t("Repost")}
               aria-pressed={!!post.reposted}
               disabled={!!busy || post.readOnly || post.accountId === "guest"}
               className={post.reposted ? "reposted" : ""}
@@ -247,7 +248,7 @@ export function PostCard({
             </button>
             <button
               onClick={() => action("like")}
-              aria-label={post.liked ? "Unlike" : "Like"}
+              aria-label={post.liked ? t("Unlike") : t("Like")}
               aria-pressed={!!post.liked}
               disabled={!!busy || post.readOnly || post.accountId === "guest"}
               className={post.liked ? "liked" : ""}
@@ -261,7 +262,7 @@ export function PostCard({
             </button>
             <button
               onClick={() => onSave(post)}
-              aria-label={saved ? "Unsave post" : "Save post"}
+              aria-label={saved ? t("Unsave post") : t("Save post")}
               aria-pressed={saved}
             >
               <Bookmark size={17} fill={saved ? "currentColor" : "none"} />
@@ -270,13 +271,13 @@ export function PostCard({
               href={safeUrl(post.url)}
               target="_blank"
               rel="noreferrer noopener"
-              aria-label="Open original post"
+              aria-label={t("Open original post")}
             >
               <ExternalLink size={16} />
             </a>
             {!post.readOnly && post.accountId !== "guest" && (
               <button className="reply-label" onClick={() => onReply(post)}>
-                Reply
+                {t("Reply")}
               </button>
             )}
           </div>
@@ -284,15 +285,16 @@ export function PostCard({
       </div>
       <Dialog open={!!media} onOpenChange={() => setMedia(null)}>
         <DialogContent className="max-w-5xl bg-black p-2 text-white">
-          <DialogTitle className="sr-only">Post image</DialogTitle>
+          <DialogTitle className="sr-only">{t("Post image")}</DialogTitle>
           <DialogDescription className="sr-only">
-            Image from {post.author.name}.
+            {t("Image from")}
+            {post.author.name}.
           </DialogDescription>
           {media && (
             <img
               src={media}
               alt={
-                post.media?.find((m) => m.url === media)?.alt || "Post image"
+                post.media?.find((m) => m.url === media)?.alt || t("Post image")
               }
               className="max-h-[80dvh] w-full object-contain"
             />

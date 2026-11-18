@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import { useEffect, useState } from "react";
 import {
   Bell,
@@ -64,14 +65,14 @@ export function Notifications({
     return () => abort.abort();
   }, [JSON.stringify(accounts.map((a) => a.id)), refresh]);
   const labels: Record<string, string> = {
-    favourite: "liked your post",
-    like: "liked your post",
-    reblog: "reposted your post",
-    repost: "reposted your post",
-    follow: "followed you",
-    mention: "mentioned you",
-    reply: "replied to you",
-    quote: "quoted your post",
+    favourite: t("liked your post"),
+    like: t("liked your post"),
+    reblog: t("reposted your post"),
+    repost: t("reposted your post"),
+    follow: t("followed you"),
+    mention: t("mentioned you"),
+    reply: t("replied to you"),
+    quote: t("quoted your post"),
   };
   return (
     <div className="notification-list">
@@ -125,17 +126,17 @@ export function Notifications({
       {loading ? (
         <div className="loading-state" role="status">
           <LoaderCircle className="animate-spin" />
-          Loading notifications…
+          {t("Loading notifications…")}
         </div>
       ) : (
         !items.length && (
           <div className="empty-state">
             <Bell size={28} />
-            <h2>No notifications yet</h2>
+            <h2>{t("No notifications yet")}</h2>
             <p>
               {accounts.length
-                ? "New activity will appear here."
-                : "Connect an account to see your notifications."}
+                ? t("New activity will appear here.")
+                : t("Connect an account to see your notifications.")}
             </p>
           </div>
         )

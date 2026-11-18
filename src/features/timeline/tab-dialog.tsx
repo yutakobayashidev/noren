@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import { useState, useEffect } from "react";
 import type { Account, Tab, FeedSource } from "../../domain/model";
 import {
@@ -50,10 +51,10 @@ export function TabDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogTitle className="text-xl font-semibold">
-          Add timeline
+          {t("Add timeline")}
         </DialogTitle>
         <DialogDescription className="mt-1 text-sm text-muted-foreground">
-          Keep a search, profile or list close by.
+          {t("Keep a search, profile or list close by.")}
         </DialogDescription>
         <form
           className="mt-5 space-y-4"
@@ -77,16 +78,16 @@ export function TabDialog({
           }}
         >
           <label>
-            Name
+            {t("Name")}
             <input
               name="title"
               required
-              placeholder="My timeline"
+              placeholder={t("My timeline")}
               maxLength={50}
             />
           </label>
           <label>
-            Account
+            {t("Account")}
             <select
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
@@ -100,22 +101,22 @@ export function TabDialog({
             </select>
           </label>
           <label>
-            Timeline
+            {t("Timeline")}
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value as FeedSource["kind"])}
             >
-              <option value="home">Home</option>
-              <option value="search">Search</option>
-              <option value="user">Profile</option>
-              <option value="list">List</option>
+              <option value="home">{t("Home")}</option>
+              <option value="search">{t("Search")}</option>
+              <option value="user">{t("Profile")}</option>
+              <option value="list">{t("List")}</option>
             </select>
           </label>
           {kind === "list" ? (
             <label>
-              List
+              {t("List")}
               <select name="target" required>
-                <option value="">Select a list</option>
+                <option value="">{t("Select a list")}</option>
                 {lists.map((list) => (
                   <option key={list.id} value={list.id}>
                     {list.title}
@@ -126,13 +127,13 @@ export function TabDialog({
           ) : (
             kind !== "home" && (
               <label>
-                {kind === "search" ? "Search query" : "Handle"}
+                {kind === "search" ? t("Search query") : t("Handle")}
                 <input
                   name="target"
                   required
                   placeholder={
                     kind === "search"
-                      ? "What would you like to follow?"
+                      ? t("What would you like to follow?")
                       : "username"
                   }
                 />
@@ -145,7 +146,7 @@ export function TabDialog({
             </p>
           )}
           <div className="flex justify-end">
-            <Button disabled={!accountId}>Add timeline</Button>
+            <Button disabled={!accountId}>{t("Add timeline")}</Button>
           </div>
         </form>
       </DialogContent>

@@ -1,3 +1,4 @@
+import { t, preference, changeLanguage } from "./lib/i18n";
 import { useEffect, useState } from "react";
 import {
   Home,
@@ -82,7 +83,7 @@ export function App() {
     return (
       <div className="login-page">
         <Flame size={42} />
-        <p role={error ? "alert" : "status"}>{error || "Opening Flare…"}</p>
+        <p role={error ? "alert" : "status"}>{error || t("Opening Flare…")}</p>
       </div>
     );
   if (!session.authenticated)
@@ -93,10 +94,11 @@ export function App() {
             <Flame size={34} />
           </span>
           <h1>
-            Your social world.
-            <br />A little closer.
+            {t("Your social world.")}
+            <br />
+            {t("A little closer.")}
           </h1>
-          <p>Welcome to Flare. Sign in to bring your feeds together.</p>
+          <p>{t("Welcome to Flare. Sign in to bring your feeds together.")}</p>
           <div className="login-networks">
             <PlatformIcon platform="mastodon" size={26} />
             <PlatformIcon platform="bluesky" size={26} />
@@ -106,16 +108,19 @@ export function App() {
             <Button size="lg" asChild>
               <a href="/auth/login">
                 <LockKeyhole />
-                Sign in
+                {t("Sign in")}
               </a>
             </Button>
           ) : (
             <p className="setup-note">
-              Set OIDC_ISSUER and OIDC_CLIENT_ID on the server to enable
-              sign-in.
+              {t(
+                "Set OIDC_ISSUER and OIDC_CLIENT_ID on the server to enable sign-in.",
+              )}
             </p>
           )}
-          <small>Flare Web · An independent Android-inspired client</small>
+          <small>
+            {t("Flare Web · An independent Android-inspired client")}
+          </small>
         </div>
       </div>
     );
@@ -239,27 +244,27 @@ function Workspace({ session }: { session: Session }) {
         : (custom?.source ?? { kind: "home" });
   const title =
     route.page === "notifications"
-      ? "Notifications"
+      ? t("Notifications")
       : route.page === "discover"
-        ? "Discover"
+        ? t("Discover")
         : route.page === "saved"
-          ? "Saved posts"
+          ? t("Saved posts")
           : route.page === "profile"
             ? `@${route.profile}`
-            : "Home";
+            : t("Home");
   const nav = [
-    { id: "home", label: "Home", icon: Home },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "discover", label: "Discover", icon: Search },
-    { id: "saved", label: "Saved", icon: Bookmark },
+    { id: "home", label: t("Home"), icon: Home },
+    { id: "notifications", label: t("Notifications"), icon: Bell },
+    { id: "discover", label: t("Discover"), icon: Search },
+    { id: "saved", label: t("Saved"), icon: Bookmark },
   ];
   return (
     <div className="app-shell">
-      <aside className="navigation-rail" aria-label="Main navigation">
+      <aside className="navigation-rail" aria-label={t("Main navigation")}>
         <button
           className="rail-brand"
           onClick={() => navigate({ page: "home" })}
-          aria-label="Flare home"
+          aria-label={t("Flare home")}
         >
           <Flame size={28} />
           <span>flare</span>
@@ -267,7 +272,7 @@ function Workspace({ session }: { session: Session }) {
         <button
           className="compose-fab"
           onClick={() => compose()}
-          aria-label="New post"
+          aria-label={t("New post")}
         >
           <PenLine size={24} />
         </button>
@@ -288,7 +293,7 @@ function Workspace({ session }: { session: Session }) {
         <div className="rail-bottom">
           <button
             onClick={() => setAccountsOpen(true)}
-            aria-label="Manage accounts"
+            aria-label={t("Manage accounts")}
           >
             <Avatar
               name={accounts[0]?.displayName || session.user!.name}
@@ -296,9 +301,12 @@ function Workspace({ session }: { session: Session }) {
               size={38}
             />
           </button>
-          <button onClick={() => setSettingsOpen(true)} aria-label="Settings">
+          <button
+            onClick={() => setSettingsOpen(true)}
+            aria-label={t("Settings")}
+          >
             <Settings size={23} />
-            <small>Settings</small>
+            <small>{t("Settings")}</small>
           </button>
         </div>
       </aside>
@@ -306,7 +314,7 @@ function Workspace({ session }: { session: Session }) {
         <header className="page-header">
           <button
             className="mobile-avatar"
-            aria-label="Manage accounts"
+            aria-label={t("Manage accounts")}
             onClick={() => setAccountsOpen(true)}
           >
             <Avatar
@@ -319,7 +327,7 @@ function Workspace({ session }: { session: Session }) {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Back to home"
+              aria-label={t("Back to home")}
               onClick={() =>
                 navigate({ page: "home", profile: "", account: "" })
               }
@@ -332,7 +340,7 @@ function Workspace({ session }: { session: Session }) {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Refresh timeline"
+              aria-label={t("Refresh timeline")}
               onClick={() => setRefresh((n) => n + 1)}
             >
               <RefreshCw />
@@ -340,7 +348,7 @@ function Workspace({ session }: { session: Session }) {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Timeline appearance"
+              aria-label={t("Timeline appearance")}
               onClick={() => setSettingsOpen(true)}
             >
               <SlidersHorizontal />
@@ -353,24 +361,24 @@ function Workspace({ session }: { session: Session }) {
               <Users />
               {accounts.length
                 ? `${accounts.length} account${accounts.length === 1 ? "" : "s"}`
-                : "Add account"}
+                : t("Add account")}
             </Button>
           </div>
         </header>
         {session.development && (
           <div className="dev-indicator">
-            Development session · OIDC is available when configured
+            {t("Development session · OIDC is available when configured")}
           </div>
         )}
         {session.preview && (
           <div className="dev-indicator">
-            Read-only preview · Trending on Mastodon
+            {t("Read-only preview · Trending on Mastodon")}
             {session.configured && (
               <>
                 {" "}
                 ·{" "}
                 <a href="/auth/login" className="underline">
-                  Sign in
+                  {t("Sign in")}
                 </a>
               </>
             )}
@@ -380,7 +388,7 @@ function Workspace({ session }: { session: Session }) {
           <div role="alert" className="feed-error">
             <p>{error}</p>
             <Button size="sm" onClick={() => void loadAccounts()}>
-              Retry
+              {t("Retry")}
             </Button>
           </div>
         )}
@@ -389,7 +397,7 @@ function Workspace({ session }: { session: Session }) {
             <div
               className="timeline-tabs"
               role="tablist"
-              aria-label="Timelines"
+              aria-label={t("Timelines")}
             >
               <button
                 role="tab"
@@ -397,7 +405,7 @@ function Workspace({ session }: { session: Session }) {
                 onClick={() => navigate({ tab: "mixed" })}
               >
                 <PlatformIcon platform="mixed" />
-                Mixed
+                {t("Mixed")}
               </button>
               {accounts.map((account) => (
                 <button
@@ -426,7 +434,7 @@ function Workspace({ session }: { session: Session }) {
               ))}
               <button
                 className="add-tab"
-                aria-label="Add timeline"
+                aria-label={t("Add timeline")}
                 onClick={() =>
                   accounts.length ? setTabOpen(true) : setAccountsOpen(true)
                 }
@@ -434,12 +442,12 @@ function Workspace({ session }: { session: Session }) {
                 <Plus size={20} />
               </button>
             </div>
-            <div className="layout-controls" aria-label="Timeline layout">
+            <div className="layout-controls" aria-label={t("Timeline layout")}>
               {(
                 [
-                  { id: "grid", label: "Grid view", icon: LayoutGrid },
-                  { id: "list", label: "List view", icon: List },
-                  { id: "compact", label: "Compact view", icon: AlignLeft },
+                  { id: "grid", label: t("Grid view"), icon: LayoutGrid },
+                  { id: "list", label: t("List view"), icon: List },
+                  { id: "compact", label: t("Compact view"), icon: AlignLeft },
                 ] as const
               ).map(({ id, label, icon: Icon }) => (
                 <button
@@ -464,13 +472,13 @@ function Workspace({ session }: { session: Session }) {
           >
             <Search size={22} />
             <input
-              aria-label="Search posts"
-              placeholder="Search your social world"
+              aria-label={t("Search posts")}
+              placeholder={t("Search your social world")}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
             <Button type="submit" size="sm" disabled={!searchText.trim()}>
-              Search
+              {t("Search")}
             </Button>
           </form>
         )}
@@ -481,7 +489,7 @@ function Workspace({ session }: { session: Session }) {
           {!accountsReady ? (
             <div className="loading-state" role="status">
               <LoaderCircle className="animate-spin" />
-              Opening your timelines…
+              {t("Opening your timelines…")}
             </div>
           ) : route.page === "notifications" ? (
             <Notifications
@@ -513,23 +521,23 @@ function Workspace({ session }: { session: Session }) {
             ) : (
               <div className="empty-state">
                 <Bookmark size={30} />
-                <h2>A place for the good stuff</h2>
-                <p>Save a post to find it here later.</p>
+                <h2>{t("A place for the good stuff")}</h2>
+                <p>{t("Save a post to find it here later.")}</p>
               </div>
             )
           ) : route.page === "discover" && !route.query ? (
             <div className="empty-state">
               <Search size={32} />
-              <h2>Follow your curiosity</h2>
-              <p>Search posts across your connected accounts.</p>
+              <h2>{t("Follow your curiosity")}</h2>
+              <p>{t("Search posts across your connected accounts.")}</p>
             </div>
           ) : !selected.length ? (
             <div className="empty-state">
               <Users size={30} />
-              <h2>Connect this account</h2>
-              <p>This timeline’s account is no longer connected.</p>
+              <h2>{t("Connect this account")}</h2>
+              <p>{t("This timeline’s account is no longer connected.")}</p>
               <Button onClick={() => setAccountsOpen(true)}>
-                Manage accounts
+                {t("Manage accounts")}
               </Button>
             </div>
           ) : (
@@ -543,7 +551,7 @@ function Workspace({ session }: { session: Session }) {
           )}
         </div>
       </main>
-      <nav className="mobile-navigation" aria-label="Mobile navigation">
+      <nav className="mobile-navigation" aria-label={t("Mobile navigation")}>
         {nav.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -559,7 +567,7 @@ function Workspace({ session }: { session: Session }) {
       </nav>
       <button
         className="mobile-compose"
-        aria-label="Compose post"
+        aria-label={t("Compose post")}
         onClick={() => compose()}
       >
         <PenLine size={25} />
@@ -597,13 +605,27 @@ function Workspace({ session }: { session: Session }) {
       />
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent>
-          <DialogTitle className="text-xl font-semibold">Settings</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
+            {t("Settings")}
+          </DialogTitle>
           <DialogDescription className="mt-1 text-sm text-muted-foreground">
-            Make Flare feel like home.
+            {t("Make Flare feel like home.")}
           </DialogDescription>
           <div className="mt-6 space-y-6">
             <section>
-              <h2 className="settings-label">Appearance</h2>
+              <label>
+                {t("Language")}
+                <select
+                  value={preference}
+                  onChange={(e) => changeLanguage(e.target.value)}
+                >
+                  <option value="auto">{t("Browser default")}</option>
+                  <option value="en">English</option>
+                  <option value="ja">日本語</option>
+                  <option value="zh">简体中文</option>
+                </select>
+              </label>
+              <h2 className="settings-label">{t("Appearance")}</h2>
               <div className="segmented-control">
                 {(["light", "dark", "system"] as const).map((value) => (
                   <button
@@ -618,13 +640,13 @@ function Workspace({ session }: { session: Session }) {
                     ) : (
                       <Settings size={17} />
                     )}
-                    <span>{value}</span>
+                    <span>{t(value)}</span>
                   </button>
                 ))}
               </div>
             </section>
             <section>
-              <h2 className="settings-label">Timeline layout</h2>
+              <h2 className="settings-label">{t("Timeline layout")}</h2>
               <div className="segmented-control">
                 {(["grid", "list", "compact"] as const).map((value) => (
                   <button
@@ -632,13 +654,13 @@ function Workspace({ session }: { session: Session }) {
                     aria-pressed={layout === value}
                     onClick={() => setLayout(value)}
                   >
-                    {value}
+                    {t(value)}
                   </button>
                 ))}
               </div>
             </section>
             <section>
-              <h2 className="settings-label">Accounts</h2>
+              <h2 className="settings-label">{t("Accounts")}</h2>
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -647,12 +669,12 @@ function Workspace({ session }: { session: Session }) {
                 }}
               >
                 <Users />
-                Manage accounts
+                {t("Manage accounts")}
               </Button>
             </section>
             {tabs.length > 0 && (
               <section>
-                <h2 className="settings-label">Custom timelines</h2>
+                <h2 className="settings-label">{t("Custom timelines")}</h2>
                 {tabs.map((tab) => (
                   <div
                     key={tab.id}
@@ -686,11 +708,11 @@ function Workspace({ session }: { session: Session }) {
                 }}
               >
                 <LogOut />
-                Sign out
+                {t("Sign out")}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Flare Web · Based on Flare for Android · AGPL-3.0
+              {t("Flare Web · Based on Flare for Android · AGPL-3.0")}
             </p>
           </div>
         </DialogContent>

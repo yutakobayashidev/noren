@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import { useEffect, useState } from "react";
 import { Send, LoaderCircle, Globe, FileText } from "lucide-react";
 import type { Account, SocialPost } from "../../domain/model";
@@ -103,10 +104,12 @@ export function ComposeDialog({
     >
       <DialogContent>
         <DialogTitle className="text-xl font-semibold">
-          {reply ? "Reply" : "New post"}
+          {reply ? t("Reply") : t("New post")}
         </DialogTitle>
         <DialogDescription className="sr-only">
-          Choose accounts and write your post. Drafts are saved in this browser.
+          {t(
+            "Choose accounts and write your post. Drafts are saved in this browser.",
+          )}
         </DialogDescription>
         <form onSubmit={submit}>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -147,12 +150,14 @@ export function ComposeDialog({
           )}
           <textarea
             autoFocus
-            aria-label="Post text"
+            aria-label={t("Post text")}
             className="compose-input"
             value={text}
             disabled={busy}
             onChange={(e) => update(e.target.value)}
-            placeholder={reply ? "Write your reply…" : "What’s on your mind?"}
+            placeholder={
+              reply ? t("Write your reply…") : t("What’s on your mind?")
+            }
             rows={6}
           />
           {error && (
@@ -162,10 +167,10 @@ export function ComposeDialog({
           )}
           <div className="flex items-center gap-2 border-t border-border pt-4 text-sm text-muted-foreground">
             <Globe size={16} />
-            <span>Public</span>
+            <span>{t("Public")}</span>
             <span className="ml-auto flex items-center gap-1.5 text-xs">
               <FileText size={13} />
-              Draft saved locally
+              {t("Draft saved locally")}
             </span>
           </div>
           <div className="mt-4 flex items-center justify-between">
@@ -184,7 +189,7 @@ export function ComposeDialog({
               }
             >
               {busy ? <LoaderCircle className="animate-spin" /> : <Send />}
-              {reply ? "Reply" : "Post"}
+              {reply ? t("Reply") : t("Post")}
             </Button>
           </div>
         </form>

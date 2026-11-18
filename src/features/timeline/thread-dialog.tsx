@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import { useState, useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
 import type { SocialPost } from "../../domain/model";
@@ -46,16 +47,16 @@ export function ThreadDialog({
     >
       <DialogContent className="max-w-2xl bg-background px-3">
         <DialogTitle className="mb-4 px-3 text-xl font-semibold">
-          Conversation
+          {t("Conversation")}
         </DialogTitle>
         <DialogDescription className="sr-only">
-          Post and replies
+          {t("Post and replies")}
         </DialogDescription>
         {error && (
           <div className="feed-error" role="alert">
             <p>{error}</p>
             <Button onClick={() => setRetry((n) => n + 1)} size="sm">
-              Retry
+              {t("Retry")}
             </Button>
           </div>
         )}
@@ -79,7 +80,7 @@ export function ThreadDialog({
         {loading && (
           <div className="loading-state" role="status">
             <LoaderCircle className="animate-spin" />
-            Loading conversation…
+            {t("Loading conversation…")}
           </div>
         )}
       </DialogContent>

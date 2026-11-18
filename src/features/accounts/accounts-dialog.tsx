@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import { useState, useEffect } from "react";
 import { Plus, LogOut, LoaderCircle, Check, ArrowLeft } from "lucide-react";
 import type { Account, Platform } from "../../domain/model";
@@ -100,12 +101,12 @@ export function AccountsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogTitle className="text-xl font-semibold">
-          {platform ? "Add " + platformNames[platform] : "Your accounts"}
+          {platform ? t("Add ") + platformNames[platform] : t("Your accounts")}
         </DialogTitle>
         <DialogDescription className="mt-1 text-sm text-muted-foreground">
           {platform
-            ? "Connect an account to start reading and posting."
-            : "Your social world, together in Flare."}
+            ? t("Connect an account to start reading and posting.")
+            : t("Your social world, together in Flare.")}
         </DialogDescription>
         {error && (
           <p role="alert" className="error-message mt-4">
@@ -160,14 +161,14 @@ export function AccountsDialog({
           <form onSubmit={connect} className="mt-6 space-y-4">
             {platform === "misskey" && (
               <label>
-                Misskey server
+                {t("Misskey server")}
                 <input name="origin" placeholder="misskey.io" required />
               </label>
             )}
             {platform === "mastodon" && (
               <>
                 <label>
-                  Server
+                  {t("Server")}
                   <input
                     name="origin"
                     placeholder="mastodon.social"
@@ -176,20 +177,22 @@ export function AccountsDialog({
                   />
                 </label>
                 <label>
-                  Sign-in method
+                  {t("Sign-in method")}
                   <select
                     value={mastodonMethod}
                     onChange={(event) => setMastodonMethod(event.target.value)}
                   >
                     <option value="oauth">
-                      Authorize on server (recommended)
+                      {t("Authorize on server (recommended)")}
                     </option>
-                    <option value="token">Use an existing access token</option>
+                    <option value="token">
+                      {t("Use an existing access token")}
+                    </option>
                   </select>
                 </label>
                 {mastodonMethod === "token" && (
                   <label>
-                    Access token
+                    {t("Access token")}
                     <input
                       name="token"
                       type="password"
@@ -203,7 +206,7 @@ export function AccountsDialog({
             {platform === "bluesky" && (
               <>
                 <label>
-                  Handle
+                  {t("Handle")}
                   <input
                     name="identifier"
                     placeholder="you.bsky.social"
@@ -212,7 +215,7 @@ export function AccountsDialog({
                   />
                 </label>
                 <label>
-                  App password
+                  {t("App password")}
                   <input
                     name="password"
                     type="password"
@@ -222,9 +225,9 @@ export function AccountsDialog({
                   />
                 </label>
                 <details className="text-sm">
-                  <summary>Advanced</summary>
+                  <summary>{t("Advanced")}</summary>
                   <label className="mt-3">
-                    Server
+                    {t("Server")}
                     <input
                       name="origin"
                       defaultValue="https://bsky.social"
@@ -233,8 +236,9 @@ export function AccountsDialog({
                   </label>
                 </details>
                 <p className="text-xs text-muted-foreground">
-                  Use an app password from Bluesky Settings → Privacy and
-                  security → App passwords.
+                  {t(
+                    "Use an app password from Bluesky Settings → Privacy and security → App passwords.",
+                  )}
                 </p>
               </>
             )}
@@ -242,11 +246,11 @@ export function AccountsDialog({
               <>
                 {loadingProfiles ? (
                   <p className="text-sm text-muted-foreground">
-                    Loading profiles…
+                    {t("Loading profiles…")}
                   </p>
                 ) : profiles.length ? (
                   <label>
-                    Relay profile
+                    {t("Relay profile")}
                     <select name="profile" required>
                       {profiles.map((p) => (
                         <option key={p}>{p}</option>
@@ -255,8 +259,9 @@ export function AccountsDialog({
                   </label>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No relay profiles found. Configure TWITTER_RELAY_BASE_URL on
-                    the server.
+                    {t(
+                      "No relay profiles found. Configure TWITTER_RELAY_BASE_URL on the server.",
+                    )}
                   </p>
                 )}
               </>
@@ -271,13 +276,13 @@ export function AccountsDialog({
                 }}
               >
                 <ArrowLeft />
-                Back
+                {t("Back")}
               </Button>
               <Button
                 disabled={busy || (platform === "twitter" && !profiles.length)}
               >
                 {busy ? <LoaderCircle className="animate-spin" /> : <Check />}
-                Connect
+                {t("Connect")}
               </Button>
             </div>
           </form>

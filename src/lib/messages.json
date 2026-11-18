@@ -1,0 +1,194 @@
+{
+  "Close": ["閉じる", "关闭"],
+  "Add ": ["追加：", "添加："],
+  "Your accounts": ["アカウント", "我的账号"],
+  "Connect an account to start reading and posting.": [
+    "アカウントを接続すると、投稿を読んだり書いたりできます。",
+    "连接账号后即可浏览和发布帖子。"
+  ],
+  "Your social world, together in Flare.": [
+    "Flare に接続したアカウントを管理します。",
+    "管理已连接到 Flare 的账号。"
+  ],
+  "Misskey server": ["Misskey サーバー", "Misskey 服务器"],
+  "Server": ["サーバー", "服务器"],
+  "Sign-in method": ["ログイン方法", "登录方式"],
+  "Authorize on server (recommended)": [
+    "サーバーで認可（推奨）",
+    "在服务器上授权（推荐）"
+  ],
+  "Use an existing access token": [
+    "既存のアクセストークンを使う",
+    "使用已有的访问令牌"
+  ],
+  "Access token": ["アクセストークン", "访问令牌"],
+  "Handle": ["ハンドル", "账号标识"],
+  "App password": ["アプリパスワード", "应用专用密码"],
+  "Advanced": ["詳細設定", "高级设置"],
+  "Use an app password from Bluesky Settings → Privacy and security → App passwords.": [
+    "Bluesky の「設定 → プライバシーとセキュリティ → アプリパスワード」で発行してください。",
+    "请在 Bluesky 的「设置 → 隐私和安全 → 应用专用密码」中生成密码。"
+  ],
+  "Loading profiles…": ["プロフィールを読み込み中…", "正在加载个人资料…"],
+  "Relay profile": ["リレーのプロフィール", "中继配置"],
+  "No relay profiles found. Configure TWITTER_RELAY_BASE_URL on the server.": [
+    "リレーのプロフィールがありません。サーバーで TWITTER_RELAY_BASE_URL を設定してください。",
+    "未找到中继配置。请在服务器上设置 TWITTER_RELAY_BASE_URL。"
+  ],
+  "Back": ["戻る", "返回"],
+  "Connect": ["接続", "连接"],
+  "Reply": ["返信", "回复"],
+  "New post": ["新規投稿", "新帖子"],
+  "Choose accounts and write your post. Drafts are saved in this browser.": [
+    "投稿先を選んで本文を入力してください。下書きはこのブラウザに保存されます。",
+    "请选择账号并输入内容。草稿会保存在此浏览器中。"
+  ],
+  "Post text": ["投稿本文", "帖子正文"],
+  "Write your reply…": ["返信を入力…", "写下回复…"],
+  "What’s on your mind?": ["いまどうしてる？", "有什么新鲜事？"],
+  "Public": ["公開", "公开"],
+  "Draft saved locally": ["下書きを端末に保存しました", "草稿已保存到本机"],
+  "Post": ["投稿", "发布"],
+  "Sensitive content": ["センシティブな内容", "敏感内容"],
+  "Show content": ["内容を表示", "显示内容"],
+  "Post video": ["投稿の動画", "帖子视频"],
+  "Open conversation": ["会話を開く", "打开对话"],
+  "Undo repost": ["リポストを取り消す", "取消转发"],
+  "Repost": ["リポスト", "转发"],
+  "Unlike": ["いいねを取り消す", "取消喜欢"],
+  "Like": ["いいね", "喜欢"],
+  "Unsave post": ["保存を解除", "取消收藏"],
+  "Save post": ["投稿を保存", "收藏帖子"],
+  "Open original post": ["元の投稿を開く", "打开原帖"],
+  "Post image": ["投稿の画像", "帖子图片"],
+  "Image from": ["画像の投稿者", "图片来自"],
+  "Conversation": ["会話", "对话"],
+  "Post and replies": ["投稿と返信", "帖子与回复"],
+  "Retry": ["再試行", "重试"],
+  "Loading conversation…": ["会話を読み込み中…", "正在加载对话…"],
+  "liked your post": ["があなたの投稿にいいねしました", "喜欢了你的帖子"],
+  "reposted your post": ["があなたの投稿をリポストしました", "转发了你的帖子"],
+  "followed you": ["があなたをフォローしました", "关注了你"],
+  "mentioned you": ["があなたにメンションしました", "提到了你"],
+  "replied to you": ["があなたに返信しました", "回复了你"],
+  "quoted your post": ["があなたの投稿を引用しました", "引用了你的帖子"],
+  "Loading notifications…": ["通知を読み込み中…", "正在加载通知…"],
+  "No notifications yet": ["通知はまだありません", "暂无通知"],
+  "New activity will appear here.": [
+    "新しい通知がここに表示されます。",
+    "新动态会显示在这里。"
+  ],
+  "Connect an account to see your notifications.": [
+    "通知を見るにはアカウントを接続してください。",
+    "连接账号即可查看通知。"
+  ],
+  "Loading posts…": ["投稿を読み込み中…", "正在加载帖子…"],
+  "Nothing here yet": ["投稿はまだありません", "暂无帖子"],
+  "New posts will appear here.": [
+    "新しい投稿がここに表示されます。",
+    "新帖子会显示在这里。"
+  ],
+  "Load more": ["さらに読み込む", "加载更多"],
+  "You’re all caught up": ["最新の投稿まで読みました", "已浏览全部帖子"],
+  "Add timeline": ["タイムラインを追加", "添加时间线"],
+  "Keep a search, profile or list close by.": [
+    "検索・プロフィール・リストをタブに追加できます。",
+    "将搜索、个人资料或列表添加为标签页。"
+  ],
+  "Name": ["名前", "名称"],
+  "My timeline": ["マイタイムライン", "我的时间线"],
+  "Account": ["アカウント", "账号"],
+  "Timeline": ["タイムライン", "时间线"],
+  "Home": ["ホーム", "主页"],
+  "Search": ["検索", "搜索"],
+  "Profile": ["プロフィール", "个人资料"],
+  "List": ["リスト", "列表"],
+  "Select a list": ["リストを選択", "选择列表"],
+  "Search query": ["検索語", "搜索词"],
+  "What would you like to follow?": [
+    "何をフォローしますか？",
+    "你想关注什么？"
+  ],
+  "Opening Flare…": ["Flare を開いています…", "正在打开 Flare…"],
+  "Your social world.": ["あなたの SNS を", "你的社交世界"],
+  "A little closer.": ["もっと身近に。", "触手可及。"],
+  "Welcome to Flare. Sign in to bring your feeds together.": [
+    "Flare へようこそ。ログインしてタイムラインをまとめましょう。",
+    "欢迎使用 Flare。登录后即可集中查看时间线。"
+  ],
+  "Sign in": ["ログイン", "登录"],
+  "Set OIDC_ISSUER and OIDC_CLIENT_ID on the server to enable sign-in.": [
+    "ログインを有効にするには、サーバーで OIDC_ISSUER と OIDC_CLIENT_ID を設定してください。",
+    "请在服务器上设置 OIDC_ISSUER 和 OIDC_CLIENT_ID 以启用登录。"
+  ],
+  "Flare Web · An independent Android-inspired client": [
+    "Flare Web · Android 版を参考にした独立クライアント",
+    "Flare Web · 基于 Android 版设计的独立客户端"
+  ],
+  "Notifications": ["通知", "通知"],
+  "Discover": ["見つける", "发现"],
+  "Saved posts": ["保存した投稿", "收藏的帖子"],
+  "Saved": ["保存済み", "收藏"],
+  "Main navigation": ["メインナビゲーション", "主导航"],
+  "Flare home": ["Flare ホーム", "Flare 主页"],
+  "Manage accounts": ["アカウントを管理", "管理账号"],
+  "Settings": ["設定", "设置"],
+  "Back to home": ["ホームに戻る", "返回主页"],
+  "Refresh timeline": ["タイムラインを更新", "刷新时间线"],
+  "Timeline appearance": ["タイムラインの表示", "时间线外观"],
+  "Add account": ["アカウントを追加", "添加账号"],
+  "Development session · OIDC is available when configured": [
+    "開発セッション · OIDC は設定後に利用できます",
+    "开发会话 · 配置后可使用 OIDC"
+  ],
+  "Read-only preview · Trending on Mastodon": [
+    "閲覧用プレビュー · Mastodon のトレンド",
+    "只读预览 · Mastodon 热门帖子"
+  ],
+  "Timelines": ["タイムライン一覧", "时间线"],
+  "Mixed": ["統合", "综合"],
+  "Timeline layout": ["タイムラインのレイアウト", "时间线布局"],
+  "Grid view": ["グリッド表示", "网格视图"],
+  "List view": ["リスト表示", "列表视图"],
+  "Compact view": ["コンパクト表示", "紧凑视图"],
+  "Search posts": ["投稿を検索", "搜索帖子"],
+  "Search your social world": ["タイムラインを検索", "搜索时间线"],
+  "Opening your timelines…": ["タイムラインを開いています…", "正在打开时间线…"],
+  "A place for the good stuff": ["お気に入りの投稿をここに", "收藏喜欢的帖子"],
+  "Save a post to find it here later.": [
+    "保存した投稿がここに表示されます。",
+    "收藏的帖子会显示在这里。"
+  ],
+  "Follow your curiosity": ["投稿を探す", "发现帖子"],
+  "Search posts across your connected accounts.": [
+    "接続したアカウントを横断して投稿を検索できます。",
+    "搜索已连接账号中的帖子。"
+  ],
+  "Connect this account": ["このアカウントを接続", "连接此账号"],
+  "This timeline’s account is no longer connected.": [
+    "このタイムラインのアカウントは接続されていません。",
+    "此时间线的账号已断开连接。"
+  ],
+  "Mobile navigation": ["モバイルナビゲーション", "移动端导航"],
+  "Compose post": ["投稿を書く", "撰写帖子"],
+  "Make Flare feel like home.": [
+    "Flare の表示や操作を変更できます。",
+    "自定义 Flare 的外观和操作。"
+  ],
+  "Appearance": ["外観", "外观"],
+  "Accounts": ["アカウント", "账号"],
+  "Custom timelines": ["カスタムタイムライン", "自定义时间线"],
+  "Sign out": ["ログアウト", "退出登录"],
+  "Flare Web · Based on Flare for Android · AGPL-3.0": [
+    "Flare Web · Flare Android 版がベース · AGPL-3.0",
+    "Flare Web · 基于 Flare Android 版 · AGPL-3.0"
+  ],
+  "Language": ["言語", "语言"],
+  "Browser default": ["ブラウザの設定", "浏览器默认语言"],
+  "light": ["ライト", "浅色"],
+  "dark": ["ダーク", "深色"],
+  "system": ["システム", "系统"],
+  "grid": ["グリッド", "网格"],
+  "list": ["リスト", "列表"],
+  "compact": ["コンパクト", "紧凑"]
+}
