@@ -1,6 +1,6 @@
-# Flare Web
+# Noren
 
-Flare Android のタイムラインとアカウント操作を React・TypeScript・Tailwind CSS・shadcn/ui で実装した Web クライアントです。最初に OIDC で Flare Web にログインし、Accounts から各 SNS を接続します。
+Flare Android のタイムラインとアカウント操作を React・TypeScript・Tailwind CSS・shadcn/ui で実装した Web クライアントです。最初に OIDC で Noren にログインし、Accounts から各 SNS を接続します。
 
 | 接続先 | 接続方法 |
 | --- | --- |
@@ -18,11 +18,11 @@ PWA のインストールは HTTPS または localhost の本番ビルドで利�
 
 ## 移植元
 
-画面構成とタイムラインの扱いは [Flare Android](https://github.com/flaresocialapp/Flare/tree/fd3979c2860ed509ecc97c6eef2212a977571282) の HomeScreen、HomeTimelineScreen と各 SNS の DataSource を参照しています。PWA アイコンの出典も同リポジトリです。twitter-lite からは X の投稿変換と Relay 接続を採用しています。ドメイン用語は [GLOSSARY.md](GLOSSARY.md) にまとめています。
+画面構成とタイムラインの扱いは [Flare Android](https://github.com/flaresocialapp/Flare/tree/fd3979c2860ed509ecc97c6eef2212a977571282) の HomeScreen、HomeTimelineScreen と各 SNS の DataSource を参照しています。PWA アイコンは本プロジェクト用に制作しました。ドメイン用語は [GLOSSARY.md](GLOSSARY.md) にまとめています。
 
 ## ワークスペース
 
-pnpm workspace のルートは Flare Web クライアントと API、`apps/site` は Astro の LP・作者ガイド、`packages/plugin-starter` はレジストリから有効化できる投稿操作のサンプルです。通常の開発起動で同じ origin の `/site/` と `/site/plugins/` が開けます。LP の編集時は `pnpm site:dev` で Astro のライブプレビューを起動できます。
+pnpm workspace のルートは Noren クライアントと API、`apps/site` は Astro の LP・作者ガイド、`packages/plugin-starter` はレジストリから有効化できる投稿操作のサンプルです。通常の開発起動で同じ origin の `/site/` と `/site/plugins/` が開けます。LP の編集時は `pnpm site:dev` で Astro のライブプレビューを起動できます。
 
 - `pnpm check` は整形、lint、型検査、単体・OIDC テストを順に実行します。単体テストは Vite+ の Vitest、lint は Oxlint、整形は Oxfmt と Astro 用 Prettier プラグインを使います。
 - `pnpm format` はワークスペースのコードを整形します。
@@ -45,3 +45,7 @@ LP は独立した Astro アプリとしても配信できます。`PUBLIC_FLARE
 | 別の SNS で開く | 作者のプロフィールに記載されたリンクから、接続済みアカウントで別のプロフィールに移る。 |
 
 投稿操作の作者ガイドは LP の `/plugins/`、NixOS への追加方法は [Nix の設定](docs/nix.md) にあります。
+
+## ライセンスとリリース判定
+
+Noren 本体は AGPL-3.0-only です。個別の素材・ライブラリの条件は [ライセンス一覧](public/licenses/index.html) に記載しています。本番ビルドは設定から開ける `/licenses/index.html` と、その版のアプリケーションソース `/source.tar.gz` を配信します。[動作確認と未確認項目](docs/release-status.md)

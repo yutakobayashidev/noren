@@ -163,7 +163,7 @@ export function createAuth() {
           ? claims.name
           : typeof claims.preferred_username === "string"
             ? claims.preferred_username
-            : "Flare user",
+            : "Noren user",
     };
     set(res, "flare_session", await seal({ user }, "flare_session", 28800), 28800);
     res.redirect("/");

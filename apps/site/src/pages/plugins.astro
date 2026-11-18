@@ -33,7 +33,7 @@ import manifest from "../../../../plugins/quote-local/manifest.json";
   <p>
     この例は post.text
     を要求するので、選んだ投稿の本文を読めます。元リンクを使う場合は post.url
-    を追加します。copyText の結果を返すと、Flare
+    を追加します。copyText の結果を返すと、Noren
     がテキストの確認とコピーを担当します。
   </p>
   <pre>{code}</pre>
@@ -49,7 +49,7 @@ pnpm dev</pre>
     独立したリポジトリのルートに manifest.json と action.js
     を置いて配布できます。管理者は NixOS モジュールにディレクトリを指定します。
   </p>
-  <pre>services.flare-web.plugins = [ ./plugins/my-quote ];</pre>
+  <pre>services.noren.plugins = [ ./plugins/my-quote ];</pre>
   <p>
     インストールすると作者名と要求権限がレジストリに表示されます。操作は読者が有効にして投稿を選んだときに、隔離された
     Worker で実行されます。

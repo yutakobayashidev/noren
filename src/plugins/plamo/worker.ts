@@ -1,4 +1,4 @@
-import { model, fileName, cachedModel } from "./model";
+import { getModel } from "./download";
 interface Runtime {
   loadModel(blobs: Blob[], options: Record<string, unknown>): Promise<void>;
   createCompletion(options: {
@@ -13,24 +13,7 @@ interface Runtime {
 let engine: Runtime | undefined;
 async function load(allowDownload: boolean) {
   if (engine) return engine;
-  const file = await navigator.locks.request("flare-plamo-model", async () => {
-    const cached = await cachedModel();
-    if (cached) return cached;
-    if (!allowDownload) throw new Error("Model download required");
-    const download = await fetch(model.url, { credentials: "omit", referrerPolicy: "no-referrer" });
-    if (!download.ok) throw new Error("Model download failed");
-    const blob = await download.blob();
-    if (blob.size !== model.bytes) throw new Error("Model verification failed");
-    const digest = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
-    const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
-    if (hex !== model.sha256) throw new Error("Model verification failed");
-    const handle = await (
-      await navigator.storage.getDirectory()
-    ).getFileHandle(fileName, { create: true });
-    const writable = await handle.createWritable();
-    await blob.stream().pipeTo(writable);
-    return handle.getFile();
-  });
+  const file = await getModel(allowDownload, (bytes) => self.postMessage({ progress: bytes }));
   const root = new URL("/runtime/sakutto-1.7.3/vendor/wllama/", location.origin);
   const asset = (name: string) => new URL(name, root).href;
   const { Wllama } = await import(/* @vite-ignore */ asset("wllama.js"));

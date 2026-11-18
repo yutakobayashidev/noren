@@ -22,11 +22,11 @@ nix run
 この flake の `nixosModules.default` を import し、次の設定を追加します。
 
 ```nix
-services.flare-web = {
+services.noren = {
   enable = true;
   port = 3101;
   settings = {
-    APP_ORIGIN = "https://flare.example.com";
+    APP_ORIGIN = "https://noren.example.com";
     OIDC_ISSUER = "https://id.example.com";
     OIDC_CLIENT_ID = "flare-web";
   };
@@ -41,9 +41,9 @@ services.flare-web = {
 独立したディレクトリに API v2 の manifest.json と action.js を置き、NixOS の設定に追加します。プラグイン作者は Nix 式を書く必要がありません。
 
 ```nix
-services.flare-web.plugins = [ ./plugins/my-action ];
+services.noren.plugins = [ ./plugins/my-action ];
 ```
 
-外部 Git リポジトリなら flake input を `flake = false;` で宣言し、その `outPath` をリストに渡します。配布するリビジョンは flake.lock に記録されます。パッケージを直接使う場合は `flare-web.packages.${system}.default.override { plugins = [ ./plugins/my-action ]; }` です。独自の services.flare-web.package を指定する場合は、そのパッケージの override に plugins を渡してください。
+外部 Git リポジトリなら flake input を `flake = false;` で宣言し、その `outPath` をリストに渡します。配布するリビジョンは flake.lock に記録されます。パッケージを直接使う場合は `flare-web.packages.${system}.default.override { plugins = [ ./plugins/my-action ]; }` です。独自の services.noren.package を指定する場合は、そのパッケージの override に plugins を渡してください。
 
 [引用操作のサンプル](../plugins/quote-local/) をコピーして ID と表示名を変えると、自分の配布物を試せます。action.js は依存を一つの JS にまとめた ES モジュールで、default export が投稿を受け取ります。権限に post.text を指定すると本文、post.url を指定すると元 URL を読めます。copyText はコピー用ダイアログ、inlineText は投稿の下にテキストを表示します。設定のプラグイン一覧で有効にすると使えます。

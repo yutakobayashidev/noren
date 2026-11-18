@@ -2,7 +2,7 @@
   "apiVersion": 2,
   "id": "flare.plamo",
   "version": "1.0.0",
-  "author": "Flare Web",
+  "author": "Noren",
   "name": {"en":"Translate with PLaMo","ja":"PLaMo で翻訳","zh":"用 PLaMo 翻译"},
   "action": "translate",
   "permissions": ["post.text","model.plamo"],

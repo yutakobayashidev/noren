@@ -29,6 +29,11 @@ app.use(auth.sameOrigin);
 app.use("/auth", auth.router);
 app.use("/api", auth.requireAuth, apiRouter());
 app.use("/api", (_req, res) => res.status(404).json({ error: "Not found." }));
+app.get(["/source.tar.gz", "/licenses/bundled.md"], (req, res) => {
+  const file = resolve("dist", req.path.slice(1));
+  if (existsSync(file)) res.sendFile(file);
+  else res.status(404).send("Available after the production build.");
+});
 app.use("/site", express.static(resolve("dist/site")));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(resolve("dist"), { index: false }));
@@ -58,7 +63,7 @@ app.use(
 );
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || "127.0.0.1";
-server.listen(port, host, () => console.log(`Flare Web listening at ${auth.origin.origin}`));
+server.listen(port, host, () => console.log(`Noren listening at ${auth.origin.origin}`));
 function shutdown() {
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 5000).unref();

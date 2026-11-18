@@ -70,6 +70,7 @@ export function PostCard({
 }) {
   const enabledActions = useContext(EnabledActions);
   const [pluginResult, setPluginResult] = useState("");
+  const [downloaded, setDownloaded] = useState(0);
   const [runningPlugin, setRunningPlugin] = useState("");
   const job = useRef<AbortController | null>(null);
   const [inline, setInline] = useState<{ grant: string; text: string } | null>(null);
@@ -288,6 +289,7 @@ export function PostCard({
                     }
                     job.current?.abort();
                     setRunningPlugin(action.grant);
+                    setDownloaded(0);
                     const controller = new AbortController();
                     job.current = controller;
                     try {
@@ -295,6 +297,7 @@ export function PostCard({
                       const result = await action.run(
                         { post: { text: post.text, url: post.url } },
                         controller.signal,
+                        setDownloaded,
                       );
                       if (controller.signal.aborted) return;
                       if (result.kind === "inlineText")
@@ -308,7 +311,10 @@ export function PostCard({
                     }
                   }}
                 >
-                  {runningPlugin === action.grant ? t("Cancel") : action.name}
+                  {runningPlugin === action.grant
+                    ? t("Cancel") +
+                      (downloaded ? " · " + Math.round(downloaded / 1000000) + " / 573 MB" : "")
+                    : action.name}
                 </button>
               ))}
             {!post.readOnly && post.accountId !== "guest" && (

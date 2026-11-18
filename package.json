@@ -1,12 +1,12 @@
 {
-  "name": "flare-web",
+  "name": "noren",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "dev": "pnpm site:build && tsx watch server/index.ts",
-    "build": "tsc --noEmit && vite build && pnpm site:build",
+    "build": "tsc --noEmit && vite build && pnpm site:build && sh scripts/package-source.sh",
     "start": "NODE_ENV=production tsx server/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vp test run",
@@ -21,6 +21,7 @@
   "dependencies": {
     "@atproto/api": "^0.18.0",
     "@atproto/oauth-client-node": "^0.5.17",
+    "@noble/hashes": "2.0.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.3",
     "@yuta/bird": "0.10.1",

@@ -15,7 +15,12 @@ export async function removeModel() {
   closeWorker();
   await navigator.locks.request("flare-plamo-model", deleteModel);
 }
-export function translate(text: string, language: string, signal: AbortSignal): Promise<string> {
+export function translate(
+  text: string,
+  language: string,
+  signal: AbortSignal,
+  progress?: (bytes: number) => void,
+): Promise<string> {
   const initialGeneration = generation;
   const run = async () => {
     signal.throwIfAborted();
@@ -52,8 +57,14 @@ export function translate(text: string, language: string, signal: AbortSignal): 
         10 * 60 * 1000,
       );
       cancelActive = abort;
-      active.onmessage = ({ data }) =>
-        data.error ? finish(new Error(t(data.error))) : finish(undefined, data.text);
+      active.onmessage = ({ data }) => {
+        if (typeof data.progress === "number") {
+          progress?.(data.progress);
+          return;
+        }
+        if (data.error) finish(new Error(t(data.error)));
+        else finish(undefined, data.text);
+      };
       active.onerror = () => finish(new Error(t("Translation failed")));
       active.onmessageerror = active.onerror as () => void;
       signal.addEventListener("abort", abort, { once: true });

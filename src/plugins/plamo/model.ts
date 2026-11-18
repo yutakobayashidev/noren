@@ -17,9 +17,10 @@ export async function cachedModel(): Promise<File | undefined> {
 }
 export async function deleteModel() {
   const root = await navigator.storage.getDirectory();
-  try {
-    await root.removeEntry(fileName);
-  } catch (e) {
-    if (!(e instanceof DOMException && e.name === "NotFoundError")) throw e;
-  }
+  for (const name of [fileName, fileName + ".part"])
+    try {
+      await root.removeEntry(name);
+    } catch (e) {
+      if (!(e instanceof DOMException && e.name === "NotFoundError")) throw e;
+    }
 }

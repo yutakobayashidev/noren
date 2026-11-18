@@ -17,7 +17,7 @@ export const readingPlugins = contributions.map(([id, name, category]) => ({
   grant: id,
   name: t(name),
   category: t(category),
-  author: "Flare Web",
+  author: "Noren",
   permissions: undefined,
 }));
 

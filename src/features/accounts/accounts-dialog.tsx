@@ -99,7 +99,7 @@ export function AccountsDialog({
         <DialogDescription className="mt-1 text-sm text-muted-foreground">
           {platform
             ? t("Connect an account to start reading and posting.")
-            : t("Your social world, together in Flare.")}
+            : t("Your social world, together in Noren.")}
         </DialogDescription>
         {error && (
           <p role="alert" className="error-message mt-4">

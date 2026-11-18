@@ -1,5 +1,5 @@
 {
-  description = "Flare Android-inspired Web client — React, TypeScript and OIDC";
+  description = "Noren, a Flare Android-inspired Web client — React, TypeScript and OIDC";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/168543c3491074de451852748ac9b310dad0021a";
   outputs = { self, nixpkgs }:
     let

@@ -1,4 +1,4 @@
-const cacheName = "flare-offline-v1";
+const cacheName = "noren-offline-v2";
 const offlinePage = "/offline.html";
 const icon = "/android-chrome-192x192.png";
 self.addEventListener("install", (event) => {

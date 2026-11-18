@@ -73,4 +73,4 @@ export default function run({ post }) {
 - **別の SNS で開く**。プロフィールに著者自身が載せている別アカウントを候補にし、Flare 内で移動する。FediFinder が Twitter のフォロー先のプロフィールから Fediverse のアドレスを探す発想を、一人ずつ読む操作に応用する。[FediFinder](https://github.com/lucahammer/fedifinder)
 - **このタブの読み方**。Control Panel for Twitter のタイムライン調整をヒントに、タブごとに「本人の投稿」「人から回ってきた投稿」を切り替える。後者を選ぶと、誰の紹介で見つけたかを投稿の上に表示する。[Control Panel for Twitter](https://github.com/insin/control-panel-for-twitter)
 
-WebMCP は同梱の任意プラグインとして検索フォームに接続する。設定で有効にし、Discover を開いたときだけ、対応ブラウザが flare_search_posts を発見できる。検索の送信先と結果表示は手動操作と共通。[WebMCP](https://developer.chrome.com/docs/modern-web-guidance/guides/webmcp/webmcp)
+WebMCP は同梱の任意プラグインとして検索フォームに接続する。設定で有効にし、Discover を開いたときだけ、対応ブラウザが noren_search_posts を発見できる。検索の送信先と結果表示は手動操作と共通。[WebMCP](https://developer.chrome.com/docs/modern-web-guidance/guides/webmcp/webmcp)

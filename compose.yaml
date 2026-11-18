@@ -1,5 +1,5 @@
 services:
-  flare-web:
+  noren:
     build: .
     restart: unless-stopped
     init: true

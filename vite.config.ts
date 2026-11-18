@@ -26,6 +26,7 @@ function validatePlugins() {
   }
 }
 export default defineConfig({
+  build: { license: { fileName: "licenses/bundled.md" } },
   plugins: [
     {
       name: "flare-worker-source",

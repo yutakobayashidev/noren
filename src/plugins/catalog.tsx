@@ -11,7 +11,7 @@ const catalog = [
 ];
 const webMcp = {
   name: "WebMCP",
-  publisher: "Flare Web",
+  publisher: "Noren",
   category: "Browser tools",
   description:
     "Let a browser assistant open a search across your connected accounts while Discover is open.",
@@ -101,7 +101,7 @@ export function PluginCatalog({
             <dl className="registry-author">
               <dt>{t("Developer")}</dt>
               <dd>
-                <img alt="" src="/flare.svg" />
+                <img alt="" src="/noren.svg" />
                 {webMcp.publisher}
               </dd>
             </dl>
@@ -147,6 +147,27 @@ export function PluginCatalog({
                 >
                   {t("Remove downloaded model")}
                 </button>
+                <label>
+                  {t("Import verified GGUF")}
+                  <input
+                    type="file"
+                    accept=".gguf"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!file) return;
+                      try {
+                        const { importModel } = await import("./plamo/download");
+                        await importModel(file);
+                        setModelStatus(t("Model ready"));
+                      } catch (error) {
+                        setModelStatus(
+                          t(error instanceof Error ? error.message : "Model verification failed"),
+                        );
+                      }
+                    }}
+                  />
+                </label>
                 <span role="status">{modelStatus}</span>
               </>
             )}

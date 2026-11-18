@@ -18,7 +18,7 @@
 配布単位は manifest とブラウザ用 JS を含むディレクトリとする。作者は Nix を書かずに公開できる。NixOS モジュールの設定は次のとおり。外部リポジトリは flake input として宣言し、flake.lock でリビジョンを固定する。
 
 ```nix
-services.flare-web.plugins = [
+services.noren.plugins = [
   ./plugins/my-quote
   inputs.plamo-plugin.outPath
 ];

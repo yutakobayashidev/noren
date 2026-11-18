@@ -11,7 +11,11 @@ type PostAction = {
   author: string;
   grant: string;
   permissions?: string[];
-  run: (input: Input, signal: AbortSignal) => Promise<ActionResult>;
+  run: (
+    input: Input,
+    signal: AbortSignal,
+    progress?: (bytes: number) => void,
+  ) => Promise<ActionResult>;
 };
 type Manifest = { id: string; name: string; author: string; apiVersion: number; entry: string };
 const manifests = import.meta.glob<Manifest>("/packages/*/manifest.json", {
@@ -41,7 +45,7 @@ export const postActions: PostAction[] = [
       name: m.name[language],
       permissions: m.permissions,
       author: m.author,
-      async run({ post }: Input, signal: AbortSignal) {
+      async run({ post }: Input, signal: AbortSignal, progress?: (bytes: number) => void) {
         const input = {
           post: Object.fromEntries(
             m.permissions
@@ -62,7 +66,10 @@ export const postActions: PostAction[] = [
         )
           throw new Error("Invalid translation request");
         const { translate } = await import("./plamo/client");
-        return { kind: "inlineText" as const, text: await translate(post.text, language, signal) };
+        return {
+          kind: "inlineText" as const,
+          text: await translate(post.text, language, signal, progress),
+        };
       },
     };
   }),

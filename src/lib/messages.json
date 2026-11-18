@@ -6,9 +6,9 @@
     "アカウントを接続すると、投稿を読んだり書いたりできます。",
     "连接账号后即可浏览和发布帖子。"
   ],
-  "Your social world, together in Flare.": [
-    "Flare に接続したアカウントを管理します。",
-    "管理已连接到 Flare 的账号。"
+  "Your social world, together in Noren.": [
+    "Noren に接続したアカウントを管理します。",
+    "管理已连接到 Noren 的账号。"
   ],
   "Misskey server": ["Misskey サーバー", "Misskey 服务器"],
   "Server": ["サーバー", "服务器"],
@@ -94,28 +94,28 @@
   "Select a list": ["リストを選択", "选择列表"],
   "Search query": ["検索語", "搜索词"],
   "What would you like to follow?": ["何をフォローしますか？", "你想关注什么？"],
-  "Opening Flare…": ["Flare を開いています…", "正在打开 Flare…"],
+  "Opening Noren…": ["Noren を開いています…", "正在打开 Noren…"],
   "Your social world.": ["あなたの SNS を", "你的社交世界"],
   "A little closer.": ["もっと身近に。", "触手可及。"],
-  "Welcome to Flare. Sign in to bring your feeds together.": [
-    "Flare へようこそ。ログインしてタイムラインをまとめましょう。",
-    "欢迎使用 Flare。登录后即可集中查看时间线。"
+  "Welcome to Noren. Sign in to bring your feeds together.": [
+    "Noren へようこそ。ログインしてタイムラインをまとめましょう。",
+    "欢迎使用 Noren。登录后即可集中查看时间线。"
   ],
   "Sign in": ["ログイン", "登录"],
   "Set OIDC_ISSUER and OIDC_CLIENT_ID on the server to enable sign-in.": [
     "ログインを有効にするには、サーバーで OIDC_ISSUER と OIDC_CLIENT_ID を設定してください。",
     "请在服务器上设置 OIDC_ISSUER 和 OIDC_CLIENT_ID 以启用登录。"
   ],
-  "Flare Web · An independent Android-inspired client": [
-    "Flare Web · Android 版を参考にした独立クライアント",
-    "Flare Web · 基于 Android 版设计的独立客户端"
+  "Noren · An independent Android-inspired client": [
+    "Noren · Android 版を参考にした独立クライアント",
+    "Noren · 基于 Android 版设计的独立客户端"
   ],
   "Notifications": ["通知", "通知"],
   "Discover": ["見つける", "发现"],
   "Saved posts": ["保存した投稿", "收藏的帖子"],
   "Saved": ["保存済み", "收藏"],
   "Main navigation": ["メインナビゲーション", "主导航"],
-  "Flare home": ["Flare ホーム", "Flare 主页"],
+  "Noren home": ["Noren ホーム", "Noren 主页"],
   "Manage accounts": ["アカウントを管理", "管理账号"],
   "Settings": ["設定", "设置"],
   "Back to home": ["ホームに戻る", "返回主页"],
@@ -156,17 +156,17 @@
   ],
   "Mobile navigation": ["モバイルナビゲーション", "移动端导航"],
   "Compose post": ["投稿を書く", "撰写帖子"],
-  "Make Flare feel like home.": [
-    "Flare の表示や操作を変更できます。",
-    "自定义 Flare 的外观和操作。"
+  "Make Noren feel like home.": [
+    "Noren の表示や操作を変更できます。",
+    "自定义 Noren 的外观和操作。"
   ],
   "Appearance": ["外観", "外观"],
   "Accounts": ["アカウント", "账号"],
   "Custom timelines": ["カスタムタイムライン", "自定义时间线"],
   "Sign out": ["ログアウト", "退出登录"],
-  "Flare Web · Based on Flare for Android · AGPL-3.0": [
-    "Flare Web · Flare Android 版がベース · AGPL-3.0",
-    "Flare Web · 基于 Flare Android 版 · AGPL-3.0"
+  "Noren · Based on Flare for Android · AGPL-3.0": [
+    "Noren · Flare Android 版がベース · AGPL-3.0",
+    "Noren · 基于 Flare Android 版 · AGPL-3.0"
   ],
   "Language": ["言語", "语言"],
   "Browser default": ["ブラウザの設定", "浏览器默认语言"],
@@ -259,5 +259,7 @@
   "Event timelines": ["遠征タブ", "活动时间线"],
   "Ends at": ["終了日時", "结束时间"],
   "Include this source": ["このアカウントの取得条件を追加", "添加此账号的信息源"],
-  "Linked profiles": ["別の SNS で開く", "关联的社交账号"]
+  "Linked profiles": ["別の SNS で開く", "关联的社交账号"],
+  "Import verified GGUF": ["取得済みの GGUF を読み込む", "导入已有的 GGUF 文件"],
+  "Model ready": ["モデルを使用できます", "模型已就绪"]
 }

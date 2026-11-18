@@ -25,7 +25,7 @@ export function blueskyMetadata() {
     client_id: loopback
       ? "http://localhost?" + new URLSearchParams({ redirect_uri: callback, scope })
       : new URL("/bluesky-client.json", origin).href,
-    client_name: "Flare Web",
+    client_name: "Noren",
     client_uri: origin.origin,
     redirect_uris: [callback] as [string],
     scope,

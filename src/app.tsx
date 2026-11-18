@@ -21,7 +21,6 @@ import {
   Moon,
   ArrowLeft,
   LogOut,
-  Flame,
   Users,
   LoaderCircle,
   SlidersHorizontal,
@@ -83,8 +82,8 @@ export function App() {
   if (!session)
     return (
       <div className="login-page">
-        <Flame size={42} />
-        <p role={error ? "alert" : "status"}>{error || t("Opening Flare…")}</p>
+        <img src="/noren.svg" alt="" width="42" height="42" />
+        <p role={error ? "alert" : "status"}>{error || t("Opening Noren…")}</p>
       </div>
     );
   if (!session.authenticated)
@@ -92,14 +91,14 @@ export function App() {
       <div className="login-page">
         <div className="login-card">
           <span className="brand-mark">
-            <Flame size={34} />
+            <img src="/noren.svg" alt="" width="34" height="34" />
           </span>
           <h1>
             {t("Your social world.")}
             <br />
             {t("A little closer.")}
           </h1>
-          <p>{t("Welcome to Flare. Sign in to bring your feeds together.")}</p>
+          <p>{t("Welcome to Noren. Sign in to bring your feeds together.")}</p>
           <div className="login-networks">
             <PlatformIcon platform="mastodon" size={26} />
             <PlatformIcon platform="bluesky" size={26} />
@@ -117,7 +116,7 @@ export function App() {
               {t("Set OIDC_ISSUER and OIDC_CLIENT_ID on the server to enable sign-in.")}
             </p>
           )}
-          <small>{t("Flare Web · An independent Android-inspired client")}</small>
+          <small>{t("Noren · An independent Android-inspired client")}</small>
         </div>
       </div>
     );
@@ -279,10 +278,10 @@ function Workspace({ session }: { session: Session }) {
               <button
                 className="rail-brand"
                 onClick={() => navigate({ page: "home" })}
-                aria-label={t("Flare home")}
+                aria-label={t("Noren home")}
               >
-                <Flame size={28} />
-                <span>flare</span>
+                <img src="/noren.svg" alt="" width="28" height="28" />
+                <span>Noren</span>
               </button>
               <button className="compose-fab" onClick={() => compose()} aria-label={t("New post")}>
                 <PenLine size={24} />
@@ -326,7 +325,7 @@ function Workspace({ session }: { session: Session }) {
                   >
                     <ArrowLeft />
                   </Button>
-                  Flare Web / {t("Plugins")}
+                  Noren / {t("Plugins")}
                 </header>
               ) : (
                 <header className="page-header">
@@ -657,7 +656,7 @@ function Workspace({ session }: { session: Session }) {
               <DialogContent>
                 <DialogTitle className="text-xl font-semibold">{t("Settings")}</DialogTitle>
                 <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                  {t("Make Flare feel like home.")}
+                  {t("Make Noren feel like home.")}
                 </DialogDescription>
                 <div className="mt-6 space-y-6">
                   <section>
@@ -764,7 +763,9 @@ function Workspace({ session }: { session: Session }) {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {t("Flare Web · Based on Flare for Android · AGPL-3.0")}
+                    <a href="/licenses/index.html">
+                      {t("Noren · Based on Flare for Android · AGPL-3.0")}
+                    </a>
                   </p>
                 </div>
               </DialogContent>

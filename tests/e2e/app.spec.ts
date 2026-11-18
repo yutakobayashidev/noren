@@ -288,3 +288,44 @@ test("timeline groups preserve each post and repost filtering survives a reload"
   await expect(page.getByText("River reposted")).toBeVisible();
   await expect(page.locator(".post-card")).toHaveCount(1);
 });
+test("event timeline combines account-specific sources and expires without removing saved posts", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await fixture(page);
+  await enablePlugins(page, ["Event timelines"]);
+  await page.getByRole("button", { name: "Save post", exact: true }).click();
+  await page.getByRole("button", { name: "Add timeline", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name", { exact: true }).fill("Conference");
+  const end = await page.evaluate(() => {
+    const d = new Date(Date.now() + 3600000);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  });
+  await dialog.getByLabel("Ends at").fill(end);
+  await dialog.getByRole("combobox", { name: "Timeline", exact: true }).selectOption("search");
+  await dialog.getByLabel("Search query").fill("event tag");
+  await dialog.getByRole("button", { name: "Include this source" }).click();
+  await dialog.getByRole("combobox", { name: "Account", exact: true }).selectOption("b");
+  await dialog.getByRole("combobox", { name: "Timeline", exact: true }).selectOption("user");
+  await dialog.getByLabel("Handle").fill("event.example.org");
+  const seen: { accountId: string; source: unknown }[] = [];
+  page.on("request", (request) => {
+    if (request.url().endsWith("/api/timeline")) seen.push(request.postDataJSON());
+  });
+  await dialog.getByRole("button", { name: "Add timeline" }).click();
+  await expect.poll(() => new Set(seen.map((request) => JSON.stringify(request))).size).toBe(2);
+  expect(seen).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ accountId: "a", source: { kind: "search", query: "event tag" } }),
+      expect.objectContaining({
+        accountId: "b",
+        source: { kind: "user", target: "event.example.org" },
+      }),
+    ]),
+  );
+  await page.clock.fastForward(3600001);
+  await expect(page.getByRole("tab", { name: "Conference" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Saved", exact: true }).first().click();
+  await expect(page.getByText(post.text)).toBeVisible();
+});

@@ -1,4 +1,3 @@
-// Adopted from twitter-lite bird-client.server.ts, profile-service.server.ts and twitter.ts.
 import { TwitterClient, type TweetData } from "@yuta/bird";
 import { mapTwitterPost } from "../imported/twitter";
 import type { StoredAccount } from "../store";

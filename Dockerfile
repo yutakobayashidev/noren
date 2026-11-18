@@ -8,6 +8,12 @@ COPY packages ./packages
 COPY plugins ./plugins
 RUN pnpm install --frozen-lockfile
 COPY tsconfig.json vite.config.ts index.html ./
+COPY LICENSE README.md Dockerfile .dockerignore flake.nix flake.lock compose.yaml playwright.config.ts vitest.config.ts ./
+COPY nix ./nix
+COPY docker ./docker
+COPY scripts ./scripts
+COPY tests ./tests
+COPY docs ./docs
 COPY public ./public
 COPY src ./src
 COPY server ./server

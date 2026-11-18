@@ -17,3 +17,17 @@
 **/dist
 **/.astro
 !plugins/**
+!LICENSE
+!README.md
+!Dockerfile
+!.dockerignore
+!flake.nix
+!flake.lock
+!compose.yaml
+!playwright.config.ts
+!vitest.config.ts
+!nix/**
+!docker/**
+!scripts/package-source.sh
+!tests/**
+!docs/**

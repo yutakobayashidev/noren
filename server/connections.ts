@@ -43,7 +43,7 @@ export function connectionRouter(request = publicJson, validateOrigin = publicOr
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          client_name: "Flare Web",
+          client_name: "Noren",
           redirect_uris: callback(platform),
           scopes: "read write follow",
         }),
@@ -64,7 +64,7 @@ export function connectionRouter(request = publicJson, validateOrigin = publicOr
     } else {
       target = new URL(`/miauth/${state}`, origin);
       target.search = new URLSearchParams({
-        name: "Flare Web",
+        name: "Noren",
         callback: callback(platform),
         permission:
           "read:account,read:notifications,write:notes,write:reactions,read:reactions,read:following",
