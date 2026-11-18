@@ -1,13 +1,52 @@
-import { TwitterClient, type TweetData } from "@yuta/bird";
+import { TwitterClient, type CurrentUserResult, type TweetData } from "@yuta/bird";
 import { mapTwitterPost } from "../imported/twitter";
 import type { StoredAccount } from "../store";
 import type { FeedPage, FeedSource, SocialPost } from "../../src/domain/model";
 import { jsonRequest } from "../http";
+class RelayTwitterClient extends TwitterClient {
+  override async getCurrentUser(): Promise<CurrentUserResult> {
+    const options = { headers: this.getHeaders(), signal: AbortSignal.timeout(20000) };
+    const catalog = await fetch(new URL("/requests.ndjson", this.relayBaseUrl), options);
+    if (catalog.status === 404) return super.getCurrentUser();
+    if (!catalog.ok) throw new Error("Could not read the X relay request catalog.");
+
+    for (const line of (await catalog.text()).split("\n")) {
+      if (!line.includes("/Viewer")) continue;
+      const entry = JSON.parse(line);
+      if (entry.method !== "GET" || !/^\/graphql\/[\w-]+\/Viewer$/.test(entry.path)) continue;
+      const url = new URL("/i/api" + entry.path, this.relayBaseUrl);
+      for (const key of ["variables", "features", "fieldToggles"]) {
+        if (typeof entry.params?.[key] === "string") url.searchParams.set(key, entry.params[key]);
+      }
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error("The X relay could not load the selected profile.");
+      const user = (await response.json()).data?.viewer?.user_results?.result;
+      const username = user?.core?.screen_name ?? user?.legacy?.screen_name;
+      if (
+        typeof username !== "string" ||
+        !username ||
+        typeof user?.rest_id !== "string" ||
+        !user.rest_id
+      )
+        throw new Error("Sign in to X in the browser for this relay profile, then try again.");
+      this.clientUserId = user.rest_id;
+      return {
+        success: true,
+        user: {
+          id: user.rest_id,
+          username,
+          name: user.core?.name || user.legacy?.name || username,
+        },
+      };
+    }
+    return super.getCurrentUser();
+  }
+}
 const clients = new Map<string, TwitterClient>();
 export function twitterClient(account: StoredAccount) {
   const existing = clients.get(account.profile!);
   if (existing) return existing;
-  const client = new TwitterClient({
+  const client = new RelayTwitterClient({
     relayBaseUrl: process.env.TWITTER_RELAY_BASE_URL,
     profileName: account.profile,
     timeoutMs: 20000,
