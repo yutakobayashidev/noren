@@ -175,3 +175,116 @@ test("PLaMo checks device support before any model download", async ({ page }) =
   await expect(page.getByRole("alert")).toContainText("shader-f16");
   expect(downloads).toEqual([]);
 });
+
+async function enablePlugins(page: Page, titles: string[]) {
+  await page.goto("/#page=plugins");
+  for (const name of titles) {
+    const card = page
+      .locator("article")
+      .filter({ has: page.getByRole("heading", { name, exact: true }) });
+    await card.getByRole("button", { name: "Enable plugin" }).click();
+  }
+  await page.goto("/");
+}
+test("per-destination drafts and content warnings reach the publish API", async ({ page }) => {
+  await fixture(page);
+  await enablePlugins(page, ["Cross-post preview"]);
+  await page.getByRole("button", { name: "New post", exact: true }).click();
+  await page.getByRole("button", { name: "Bluesky Alex", exact: true }).click();
+  await page.getByLabel("Post text").fill("Shared original");
+  await page.locator("summary").filter({ hasText: "Alex · mastodon" }).click();
+  await page.getByLabel("Destination text").first().fill("Long Mastodon version");
+  await page.getByLabel("Content warning").fill("Spoilers");
+  let data;
+  await page.route("**/api/publish", (route) => {
+    data = route.request().postDataJSON();
+    return route.fulfill({
+      json: {
+        results: [
+          { accountId: "a", ok: true },
+          { accountId: "b", ok: true },
+        ],
+      },
+    });
+  });
+  await page.getByRole("button", { name: "Post", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(data).toMatchObject({
+    text: "Shared original",
+    variants: { a: { text: "Long Mastodon version", warning: "Spoilers" }, b: {} },
+  });
+});
+test("private notes persist and followed threads show only the author's descendants", async ({
+  page,
+}) => {
+  await fixture(page);
+  await enablePlugins(page, ["Private notes", "Followed updates"]);
+  await page.getByRole("button", { name: "Save post", exact: true }).click();
+  await page.getByRole("textbox", { name: "Private note", exact: true }).fill("conference");
+  await page.getByRole("button", { name: "Follow updates", exact: true }).click();
+  await page.route("**/api/thread", (route) =>
+    route.fulfill({
+      json: {
+        posts: [
+          post,
+          { ...post, key: "2", nativeId: "2", replyToId: "1", text: "An author update" },
+          { ...post, key: "3", nativeId: "3", replyToId: "9", text: "Another conversation" },
+        ],
+      },
+    }),
+  );
+  await page.getByRole("button", { name: "Saved", exact: true }).first().click();
+  await page.reload();
+  await expect(page.getByText("An author update")).toBeVisible();
+  await expect(page.getByText("Another conversation")).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Private note", exact: true })).toHaveValue(
+    "conference",
+  );
+  await page.getByLabel("Search private notes").fill("unrelated");
+  await expect(page.getByRole("textbox", { name: "Private note", exact: true })).toHaveCount(0);
+});
+test("profile links navigate using a connected account", async ({ page }) => {
+  await fixture(page);
+  await enablePlugins(page, ["Linked profiles"]);
+  await page.route("**/api/profile-links", (route) =>
+    route.fulfill({ json: { links: ["https://bsky.app/profile/author.example.org"] } }),
+  );
+  await page.getByRole("button", { name: "Flare community", exact: true }).click();
+  await page.getByRole("button", { name: "author.example.org · Bluesky Alex" }).click();
+  await expect(page).toHaveURL(/account=b/);
+  await expect(page).toHaveURL(/profile=author.example.org/);
+});
+test("timeline groups preserve each post and repost filtering survives a reload", async ({
+  page,
+}) => {
+  await fixture(page);
+  await enablePlugins(page, ["Group shared links", "Filter reposts"]);
+  await page.route("**/api/timeline", (route) => {
+    const accountId = route.request().postDataJSON().accountId;
+    return route.fulfill({
+      json: {
+        posts: [
+          {
+            ...post,
+            accountId,
+            text: "See https://example.org/story",
+            ...(accountId === "b" ? { boostedBy: { name: "River", handle: "river" } } : {}),
+          },
+        ],
+      },
+    });
+  });
+  await page.reload();
+  await page.getByText("Shared link · 2", { exact: false }).click();
+  await expect(
+    page
+      .getByText("See", { exact: false })
+      .filter({ has: page.locator("a[href='https://example.org/story']") })
+      .first(),
+  ).toBeVisible();
+  await page.getByRole("combobox", { name: "Filter reposts" }).selectOption("repost");
+  await page.reload();
+  await expect(page.getByRole("combobox", { name: "Filter reposts" })).toHaveValue("repost");
+  await expect(page.getByText("River reposted")).toBeVisible();
+  await expect(page.locator(".post-card")).toHaveCount(1);
+});

@@ -37,6 +37,7 @@ export function mapMastodon(raw: any, account: StoredAccount): SocialPost {
   return {
     key: `mastodon:${post.uri}`,
     nativeId: post.id,
+    replyToId: post.in_reply_to_id,
     accountId: account.id,
     platform: "mastodon",
     url: webUrl(post.url) ?? webUrl(post.uri) ?? account.origin,

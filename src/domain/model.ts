@@ -12,6 +12,7 @@ export type SocialPost = {
   key: string;
   platform: Platform;
   nativeId: string;
+  replyToId?: string;
   accountId: string;
   url: string;
   text: string;
@@ -53,6 +54,8 @@ export type Notification = {
   post?: SocialPost;
 };
 export type Tab = {
+  sources?: Record<string, FeedSource>;
+  expiresAt?: number;
   id: string;
   title: string;
   accountId: string;

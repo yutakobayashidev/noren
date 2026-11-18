@@ -23,6 +23,7 @@ export function mapMisskey(raw: any, a: StoredAccount): SocialPost {
   return {
     key: `misskey:${note.uri || a.origin + "/notes/" + note.id}`,
     nativeId: note.id,
+    replyToId: note.replyId,
     accountId: a.id,
     platform: "misskey",
     url: webUrl(note.url) || `${a.origin}/notes/${encodeURIComponent(note.id)}`,

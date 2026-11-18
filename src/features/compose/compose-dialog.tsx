@@ -1,6 +1,8 @@
+import { EnabledActions } from "../../plugins/post-actions";
+import { useStored } from "../../lib/storage";
 import { signNostr } from "../../lib/nostr";
 import { t } from "../../lib/i18n";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Send, LoaderCircle, Globe, FileText } from "lucide-react";
 import type { Account, SocialPost } from "../../domain/model";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
@@ -24,6 +26,12 @@ export function ComposeDialog({
   storageKey: string;
 }) {
   const draftKey = `${storageKey}:draft:${reply?.key ?? "new"}`;
+  const customize = useContext(EnabledActions).includes("flare.crosspost") && !reply;
+  const [variants, setVariants] = useStored<Record<string, { text?: string; warning?: string }>>(
+    storageKey + ":crosspost-drafts",
+    {},
+  );
+  const bodyFor = (id: string) => (customize ? (variants[id]?.text ?? text) : text);
   const [text, setText] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -68,7 +76,7 @@ export function ComposeDialog({
                 {
                   kind: 1,
                   created_at: Math.floor(Date.now() / 1000),
-                  content: text.trim(),
+                  content: bodyFor(a.id).trim(),
                   tags: reply
                     ? [
                         ["e", reply.nativeId, "", "reply"],
@@ -86,6 +94,9 @@ export function ComposeDialog({
         text,
         reply,
         signedEvents,
+        variants: customize
+          ? Object.fromEntries(selected.map((id) => [id, variants[id] ?? {}]))
+          : undefined,
       });
       const failed = results.filter((r) => !r.ok);
       if (failed.length) {
@@ -96,6 +107,7 @@ export function ComposeDialog({
             : failed.map((r) => r.error).join(" "),
         );
       } else {
+        if (customize) setVariants({});
         update("");
         onOpenChange(false);
         onPublished();
@@ -113,6 +125,16 @@ export function ComposeDialog({
       .filter((a) => selected.includes(a.id))
       .map((a) => (a.platform === "bluesky" ? 300 : a.platform === "twitter" ? 280 : 500)),
   );
+  const invalid = accounts
+    .filter((a) => selected.includes(a.id))
+    .some((a) => {
+      const value = bodyFor(a.id);
+      const max = a.platform === "bluesky" ? 300 : a.platform === "twitter" ? 280 : 500;
+      return (
+        !value.trim() ||
+        [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(value)].length > max
+      );
+    });
   return (
     <Dialog
       open={open}
@@ -168,6 +190,55 @@ export function ComposeDialog({
             placeholder={reply ? t("Write your reply…") : t("What’s on your mind?")}
             rows={6}
           />
+          {customize &&
+            accounts
+              .filter((a) => selected.includes(a.id))
+              .map((a) => (
+                <details key={a.id}>
+                  <summary>
+                    {a.displayName} · {a.platform}
+                    {variants[a.id]?.text !== undefined && " · " + t("Edited")}
+                  </summary>
+                  <label>
+                    {t("Destination text")}
+                    <textarea
+                      value={bodyFor(a.id)}
+                      disabled={busy}
+                      onChange={(e) =>
+                        setVariants((v) => ({ ...v, [a.id]: { ...v[a.id], text: e.target.value } }))
+                      }
+                    />
+                  </label>
+                  {a.platform === "mastodon" && (
+                    <label>
+                      {t("Content warning")}
+                      <input
+                        value={variants[a.id]?.warning ?? ""}
+                        disabled={busy}
+                        onChange={(e) =>
+                          setVariants((v) => ({
+                            ...v,
+                            [a.id]: { ...v[a.id], warning: e.target.value },
+                          }))
+                        }
+                      />
+                    </label>
+                  )}
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      setVariants((v) => {
+                        const next = { ...v };
+                        delete next[a.id];
+                        return next;
+                      })
+                    }
+                  >
+                    {t("Use shared draft")}
+                  </button>
+                </details>
+              ))}
           {error && (
             <p role="alert" className="error-message mb-4">
               {error}
@@ -186,10 +257,7 @@ export function ComposeDialog({
               {count}
               {Number.isFinite(limit) ? ` / ${limit}` : ""}
             </span>
-            <Button
-              type="submit"
-              disabled={busy || !text.trim() || !selected.length || count > limit}
-            >
+            <Button type="submit" disabled={busy || !selected.length || invalid}>
               {busy ? <LoaderCircle className="animate-spin" /> : <Send />}
               {reply ? t("Reply") : t("Post")}
             </Button>

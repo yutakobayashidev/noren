@@ -15,6 +15,7 @@ export function mapBluesky(post: any, account: StoredAccount, reason?: any): Soc
   return {
     key: `bluesky:${post.uri}`,
     nativeId: post.uri,
+    replyToId: post.record?.reply?.parent?.uri,
     cid: post.cid,
     accountId: account.id,
     platform: "bluesky",

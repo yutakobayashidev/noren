@@ -1,8 +1,8 @@
 ---
 import { sitePage, clientPage } from "../links";
 import Shell from "../Shell.astro";
-import code from "../../../../packages/plugin-starter/action.js?raw";
-import manifest from "../../../../packages/plugin-starter/manifest.json";
+import code from "../../../../plugins/quote-local/action.js?raw";
+import manifest from "../../../../plugins/quote-local/manifest.json";
 ---
 
 <Shell title="プラグインを作る">
@@ -22,33 +22,47 @@ import manifest from "../../../../packages/plugin-starter/manifest.json";
     リポジトリのルートで実行します。Node.js と pnpm のバージョンは{" "}
     <code>nix develop</code> で揃います。
   </p>
-  <pre>cp -R packages/plugin-starter packages/my-quote</pre>
+  <pre>cp -R plugins/quote-local plugins/my-quote</pre>
   <h2>2. 作者と操作を設定する</h2>
   <p>
-    コピー先の package.json の name を一意にし、manifest.json の
-    id、name、author を変更します。entry は action.js を指定します。
+    manifest.json の id
+    を一意にし、作者名と日本語・英語・中国語の操作名を書きます。permissions
+    には操作に必要な項目を列挙します。
   </p>
   <pre>{JSON.stringify(manifest,null,2)}</pre>
   <p>
-    action.js の入力は、選んだ投稿の本文と元リンクです。copyText
-    の結果を返すと、Flare がテキストの確認とコピーを担当します。
+    この例は post.text
+    を要求するので、選んだ投稿の本文を読めます。元リンクを使う場合は post.url
+    を追加します。copyText の結果を返すと、Flare
+    がテキストの確認とコピーを担当します。
   </p>
   <pre>{code}</pre>
   <h2>3. レジストリから試す</h2>
   <pre>pnpm install
 pnpm dev</pre>
   <p>
-    設定の「プラグインを探す」から有効にし、投稿に表示される操作名を押してください。公式配布に含めるには、作成したパッケージと入出力のテストをプルリクエストで提出します。現行版はレビュー後に本体と一緒にビルドする方式です。
+    設定の「プラグインを探す」から有効にし、投稿に表示される操作名を押してください。訳文などを本文の下に表示するときは
+    inlineText を返します。
+  </p>
+  <h2>4. Nix で配布する</h2>
+  <p>
+    独立したリポジトリのルートに manifest.json と action.js
+    を置いて配布できます。管理者は NixOS モジュールにディレクトリを指定します。
+  </p>
+  <pre>services.flare-web.plugins = [ ./plugins/my-quote ];</pre>
+  <p>
+    インストールすると作者名と要求権限がレジストリに表示されます。操作は読者が有効にして投稿を選んだときに、隔離された
+    Worker で実行されます。
   </p>
   <a href={clientPage("#page=plugins")}>レジストリに戻る →</a>
 </Shell>
 <script>
-  import run from "../../../../packages/plugin-starter/action.js";
+  import run from "../../../../plugins/quote-local/action.js";
   const field = document.querySelector<HTMLTextAreaElement>("#sample")!;
   const output = document.querySelector("#output")!;
   function preview() {
     output.textContent = run({
-      post: { text: field.value, url: "https://example.com/posts/1" },
+      post: { text: field.value },
     }).text;
   }
   document.querySelector("#run")!.addEventListener("click", preview);

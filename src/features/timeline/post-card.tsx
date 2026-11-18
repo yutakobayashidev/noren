@@ -1,3 +1,4 @@
+import { PostReadingTools } from "../../plugins/post-reading-tools";
 import { postActions, EnabledActions } from "../../plugins/post-actions";
 import { t } from "../../lib/i18n";
 import { useState, useContext, useEffect, useRef } from "react";
@@ -172,6 +173,13 @@ export function PostCard({
                   {inline.text}
                 </p>
               )}
+              <PostReadingTools
+                post={post}
+                saved={saved}
+                translation={
+                  inline && enabledActions.includes(inline.grant) ? inline.text : undefined
+                }
+              />
               {!!post.media?.length && (
                 <div className={`post-media media-${Math.min(2, post.media.length)}`}>
                   {post.media.map((item, i) =>

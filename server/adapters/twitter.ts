@@ -28,6 +28,7 @@ export function twitterPost(post: TweetData, account: StoredAccount): SocialPost
   const mapped = mapTwitterPost(post);
   return {
     ...mapped,
+    replyToId: post.inReplyToStatusId,
     accountId: account.id,
     likes: post.likeCount,
     reposts: post.retweetCount,

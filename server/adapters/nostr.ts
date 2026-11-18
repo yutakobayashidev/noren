@@ -85,6 +85,9 @@ function post(event: Event, account: StoredAccount): SocialPost {
     platform: "nostr",
     key: "nostr:" + event.id,
     nativeId: event.id,
+    replyToId:
+      event.tags.find((t) => t[0] === "e" && t[3] === "reply")?.[1] ??
+      event.tags.find((t) => t[0] === "e" && t[3] === "root")?.[1],
     accountId: account.id,
     text: event.content,
     url: "https://njump.me/" + event.id,
@@ -116,6 +119,10 @@ export async function nostrFeed(account: StoredAccount, source: FeedSource, curs
     posts: events.map((e) => post(e, account)),
     nextCursor: events.length === 30 ? String(events[29].created_at - 1) : undefined,
   };
+}
+export async function nostrProfile(handle: string) {
+  const [event] = await query({ authors: [hex.parse(handle)], kinds: [0], limit: 1 });
+  return event ? JSON.parse(event.content) : {};
 }
 export async function nostrThread(account: StoredAccount, id: string) {
   hex.parse(id);

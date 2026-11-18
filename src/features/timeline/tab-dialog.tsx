@@ -1,5 +1,6 @@
+import { EnabledActions } from "../../plugins/post-actions";
 import { t } from "../../lib/i18n";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import type { Account, Tab, FeedSource } from "../../domain/model";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
@@ -15,12 +16,25 @@ export function TabDialog({
   accounts: Account[];
   onAdd: (tab: Tab) => void;
 }) {
+  const events = useContext(EnabledActions).includes("flare.event-tabs");
+  const [additional, setAdditional] = useState<Record<string, FeedSource>>({});
+  const [deadline, setDeadline] = useState("");
+  const currentSource = (form: HTMLFormElement): FeedSource => {
+    const target = String(new FormData(form).get("target") ?? "");
+    return kind === "search"
+      ? { kind, query: target }
+      : kind === "home"
+        ? { kind }
+        : { kind, target };
+  };
   const [kind, setKind] = useState<FeedSource["kind"]>("home");
   const [accountId, setAccountId] = useState(accounts[0]?.id || "");
   const [lists, setLists] = useState<{ id: string; title: string }[]>([]);
   const [error, setError] = useState("");
   useEffect(() => {
     if (open) {
+      setAdditional({});
+      setDeadline("");
       setAccountId(accounts[0]?.id || "");
       setError("");
     }
@@ -58,14 +72,13 @@ export function TabDialog({
               id: crypto.randomUUID(),
               title: String(values.title),
               accountId,
-              source: {
-                kind,
-                ...(kind === "search"
-                  ? { query: String(values.target) }
-                  : kind !== "home"
-                    ? { target: String(values.target) }
-                    : {}),
-              },
+              source: currentSource(e.currentTarget),
+              ...(events && deadline
+                ? {
+                    expiresAt: new Date(deadline).getTime(),
+                    sources: { ...additional, [accountId]: currentSource(e.currentTarget) },
+                  }
+                : {}),
             });
             onOpenChange(false);
           }}
@@ -117,13 +130,66 @@ export function TabDialog({
               </label>
             )
           )}
+          {events && (
+            <>
+              <label>
+                {t("Ends at")}
+                <input
+                  type="datetime-local"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                />
+              </label>
+              {deadline && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const form = e.currentTarget.form!;
+                      if (!form.reportValidity()) return;
+                      setAdditional((previous) => ({
+                        ...previous,
+                        [accountId]: currentSource(form),
+                      }));
+                    }}
+                  >
+                    {t("Include this source")}
+                  </button>
+                  <ul>
+                    {Object.entries(additional).map(([id, s]) => (
+                      <li key={id}>
+                        {accounts.find((a) => a.id === id)?.displayName} ·{" "}
+                        {s.query || s.target || t("Home")}{" "}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAdditional((previous) => {
+                              const next = { ...previous };
+                              delete next[id];
+                              return next;
+                            })
+                          }
+                        >
+                          {t("Remove")}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
+          )}
           {error && (
             <p role="alert" className="error-message">
               {error}
             </p>
           )}
           <div className="flex justify-end">
-            <Button disabled={!accountId}>{t("Add timeline")}</Button>
+            <Button
+              disabled={!accountId || (!!deadline && new Date(deadline).getTime() <= Date.now())}
+            >
+              {t("Add timeline")}
+            </Button>
           </div>
         </form>
       </DialogContent>

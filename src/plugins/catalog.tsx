@@ -4,6 +4,11 @@ import { ArrowUpRight, Check, Plus, Search, Terminal, Workflow } from "lucide-re
 import { t } from "../lib/i18n";
 import "./catalog.css";
 
+import { readingPlugins } from "./reading";
+const catalog = [
+  ...postActions.map((a) => ({ ...a, category: t("Post action") })),
+  ...readingPlugins,
+];
 const webMcp = {
   name: "WebMCP",
   publisher: "Flare Web",
@@ -33,7 +38,7 @@ export function PluginCatalog({
       .join(" ")
       .toLocaleLowerCase()
       .includes(query.trim().toLocaleLowerCase());
-  const matchingActions = postActions.filter(
+  const matchingActions = catalog.filter(
     (a) =>
       (!activeOnly || actions.includes(a.grant)) &&
       (a.name + " " + a.author).toLowerCase().includes(query.trim().toLowerCase()),
@@ -58,7 +63,7 @@ export function PluginCatalog({
       </div>
       <div className="registry-filters">
         {[
-          [false, "All plugins", 1 + postActions.length],
+          [false, "All plugins", 1 + catalog.length],
           [
             true,
             "Enabled plugins",
@@ -115,7 +120,7 @@ export function PluginCatalog({
       {matchingActions.map((a) => (
         <article key={a.id} className="registry-action-entry">
           <div>
-            <small>{t("Post action")}</small>
+            <small>{a.category}</small>
             <h2>{a.name}</h2>
             {a.permissions && (
               <p>

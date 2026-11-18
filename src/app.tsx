@@ -1,3 +1,6 @@
+import { ProfileLinks } from "./plugins/profile-links";
+import { Watches, FollowUps, type Watch } from "./plugins/follow-ups";
+import { Notes } from "./plugins/post-reading-tools";
 import { EnabledActions } from "./plugins/post-actions";
 import { PluginCatalog } from "./plugins/catalog";
 import { webMcpSearch } from "./plugins/webmcp";
@@ -138,6 +141,9 @@ function Workspace({ session }: { session: Session }) {
   const [refresh, setRefresh] = useState(0);
   const [searchText, setSearchText] = useState(route.query);
   const [tabs, setTabs] = useStored<Tab[]>(`${storageKey}:tabs`, []);
+  const [watches, setWatches] = useStored<Watch[]>(storageKey + ":follow-ups", []);
+  const [notes, setNotes] = useStored<Record<string, string>>(storageKey + ":notes", {});
+  const [noteQuery, setNoteQuery] = useState("");
   const [saved, setSaved] = useStored<SocialPost[]>(`${storageKey}:saved`, []);
   const [theme, setTheme] = useStored<"light" | "dark" | "system">(`${storageKey}:theme`, "system");
   const [layout, setLayout] = useStored<"list" | "grid" | "compact">(
@@ -213,11 +219,29 @@ function Workspace({ session }: { session: Session }) {
     },
   };
   const available = accounts.length ? accounts : guest ? [guest] : [];
-  const custom = tabs.find((tab) => tab.id === route.tab);
+  const activeTabs = tabs.filter((tab) => !tab.expiresAt || actions.includes("flare.event-tabs"));
+  useEffect(() => {
+    const deadlines = tabs.flatMap((tab) => (tab.expiresAt ? [tab.expiresAt] : []));
+    if (!deadlines.length) return;
+    const prune = () => {
+      const now = Date.now();
+      if (tabs.some((tab) => tab.expiresAt && tab.expiresAt <= now)) {
+        setTabs((old) => old.filter((tab) => !tab.expiresAt || tab.expiresAt > now));
+        if (tabs.some((tab) => tab.id === route.tab && tab.expiresAt && tab.expiresAt <= now))
+          navigate({ tab: "mixed" });
+      }
+    };
+    prune();
+    const timer = setInterval(prune, 1000);
+    return () => clearInterval(timer);
+  }, [tabs, route.tab]);
+  const custom = activeTabs.find((tab) => tab.id === route.tab);
   let selected =
     route.tab === "mixed"
       ? available
       : available.filter((account) => account.id === (custom?.accountId || route.tab));
+  if (custom?.sources && route.page === "home")
+    selected = available.filter((a) => Object.hasOwn(custom.sources!, a.id));
   if (route.page === "profile")
     selected = available.filter((account) => account.id === route.account);
   const source: FeedSource =
@@ -245,467 +269,509 @@ function Workspace({ session }: { session: Session }) {
     { id: "saved", label: t("Saved"), icon: Bookmark },
   ];
   return (
-    <EnabledActions.Provider value={actions}>
-      <div className="app-shell">
-        <aside className="navigation-rail" aria-label={t("Main navigation")}>
-          <button
-            className="rail-brand"
-            onClick={() => navigate({ page: "home" })}
-            aria-label={t("Flare home")}
-          >
-            <Flame size={28} />
-            <span>flare</span>
-          </button>
-          <button className="compose-fab" onClick={() => compose()} aria-label={t("New post")}>
-            <PenLine size={24} />
-          </button>
-          <nav>
-            {nav.map(({ id, label, icon: Icon }) => (
+    <Watches.Provider value={{ items: watches, change: setWatches }}>
+      <Notes.Provider
+        value={{ notes, change: (key, value) => setNotes((old) => ({ ...old, [key]: value })) }}
+      >
+        <EnabledActions.Provider value={actions}>
+          <div className="app-shell">
+            <aside className="navigation-rail" aria-label={t("Main navigation")}>
               <button
-                key={id}
-                aria-current={route.page === id ? "page" : undefined}
-                onClick={() => navigate({ page: id })}
-              >
-                <span>
-                  <Icon size={23} />
-                </span>
-                <small>{label}</small>
-              </button>
-            ))}
-          </nav>
-          <div className="rail-bottom">
-            <button onClick={() => setAccountsOpen(true)} aria-label={t("Manage accounts")}>
-              <Avatar
-                name={accounts[0]?.displayName || session.user!.name}
-                url={accounts[0]?.avatarUrl}
-                size={38}
-              />
-            </button>
-            <button onClick={() => setSettingsOpen(true)} aria-label={t("Settings")}>
-              <Settings size={23} />
-              <small>{t("Settings")}</small>
-            </button>
-          </div>
-        </aside>
-        <main className={route.page === "plugins" ? "main-panel registry-panel" : "main-panel"}>
-          {route.page === "plugins" ? (
-            <header className="registry-chrome">
-              <Button
-                size="icon"
-                variant="ghost"
-                aria-label={t("Back to home")}
+                className="rail-brand"
                 onClick={() => navigate({ page: "home" })}
+                aria-label={t("Flare home")}
               >
-                <ArrowLeft />
-              </Button>
-              Flare Web / {t("Plugins")}
-            </header>
-          ) : (
-            <header className="page-header">
-              <button
-                className="mobile-avatar"
-                aria-label={t("Manage accounts")}
-                onClick={() => setAccountsOpen(true)}
-              >
-                <Avatar
-                  name={accounts[0]?.displayName || "F"}
-                  url={accounts[0]?.avatarUrl}
-                  size={34}
-                />
+                <Flame size={28} />
+                <span>flare</span>
               </button>
-              {(route.page === "profile" || route.page === "plugins") && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t("Back to home")}
-                  onClick={() => navigate({ page: "home", profile: "", account: "" })}
-                >
-                  <ArrowLeft />
-                </Button>
-              )}
-              <h1>{title}</h1>
-              <div className="header-tools">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t("Refresh timeline")}
-                  onClick={() => setRefresh((n) => n + 1)}
-                >
-                  <RefreshCw />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t("Timeline appearance")}
-                  onClick={() => setSettingsOpen(true)}
-                >
-                  <SlidersHorizontal />
-                </Button>
-                <Button
-                  className="desktop-account-button"
-                  variant="secondary"
-                  onClick={() => setAccountsOpen(true)}
-                >
-                  <Users />
-                  {accounts.length
-                    ? `${accounts.length} account${accounts.length === 1 ? "" : "s"}`
-                    : t("Add account")}
-                </Button>
-              </div>
-            </header>
-          )}
-          {session.development && (
-            <div className="dev-indicator">
-              {t("Development session · OIDC is available when configured")}
-            </div>
-          )}
-          {session.preview && (
-            <div className="dev-indicator">
-              {t("Read-only preview · Trending on Mastodon")}
-              {session.configured && (
-                <>
-                  {" "}
-                  ·{" "}
-                  <a href="/auth/login" className="underline">
-                    {t("Sign in")}
-                  </a>
-                </>
-              )}
-            </div>
-          )}
-          {error && (
-            <div role="alert" className="feed-error">
-              <p>{error}</p>
-              <Button size="sm" onClick={() => void loadAccounts()}>
-                {t("Retry")}
-              </Button>
-            </div>
-          )}
-          {["home", "discover"].includes(route.page) && (
-            <div className="timeline-toolbar">
-              <div className="timeline-tabs" role="tablist" aria-label={t("Timelines")}>
-                <button
-                  role="tab"
-                  aria-selected={route.tab === "mixed"}
-                  onClick={() => navigate({ tab: "mixed" })}
-                >
-                  <PlatformIcon platform="mixed" />
-                  {t("Mixed")}
-                </button>
-                {accounts.map((account) => (
-                  <button
-                    role="tab"
-                    key={account.id}
-                    aria-selected={route.tab === account.id}
-                    onClick={() => navigate({ tab: account.id })}
-                  >
-                    <PlatformIcon platform={account.platform} />
-                    {accounts.filter((a) => a.platform === account.platform).length > 1
-                      ? account.displayName
-                      : platformNames[account.platform]}
-                  </button>
-                ))}
-                {tabs.map((tab) => (
-                  <button
-                    role="tab"
-                    key={tab.id}
-                    aria-selected={route.tab === tab.id}
-                    onClick={() => navigate({ tab: tab.id })}
-                  >
-                    <List size={16} />
-                    {tab.title}
-                  </button>
-                ))}
-                <button
-                  className="add-tab"
-                  aria-label={t("Add timeline")}
-                  onClick={() => (accounts.length ? setTabOpen(true) : setAccountsOpen(true))}
-                >
-                  <Plus size={20} />
-                </button>
-              </div>
-              <div className="layout-controls" aria-label={t("Timeline layout")}>
-                {(
-                  [
-                    { id: "grid", label: t("Grid view"), icon: LayoutGrid },
-                    { id: "list", label: t("List view"), icon: List },
-                    { id: "compact", label: t("Compact view"), icon: AlignLeft },
-                  ] as const
-                ).map(({ id, label, icon: Icon }) => (
+              <button className="compose-fab" onClick={() => compose()} aria-label={t("New post")}>
+                <PenLine size={24} />
+              </button>
+              <nav>
+                {nav.map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
-                    aria-label={label}
-                    aria-pressed={layout === id}
-                    onClick={() => setLayout(id)}
+                    aria-current={route.page === id ? "page" : undefined}
+                    onClick={() => navigate({ page: id })}
                   >
-                    <Icon size={17} />
+                    <span>
+                      <Icon size={23} />
+                    </span>
+                    <small>{label}</small>
                   </button>
                 ))}
+              </nav>
+              <div className="rail-bottom">
+                <button onClick={() => setAccountsOpen(true)} aria-label={t("Manage accounts")}>
+                  <Avatar
+                    name={accounts[0]?.displayName || session.user!.name}
+                    url={accounts[0]?.avatarUrl}
+                    size={38}
+                  />
+                </button>
+                <button onClick={() => setSettingsOpen(true)} aria-label={t("Settings")}>
+                  <Settings size={23} />
+                  <small>{t("Settings")}</small>
+                </button>
               </div>
-            </div>
-          )}
-          {route.page === "discover" && (
-            <form
-              className="search-box"
-              {...(webMcpEnabled ? webMcpSearch : {})}
-              onSubmit={(e) => {
-                e.preventDefault();
-                const query = String(new FormData(e.currentTarget).get("query") ?? "").trim();
-                if (!query) return;
-                setSearchText(query);
-                navigate({ query });
-                const submission = e.nativeEvent as SubmitEvent & {
-                  respondWith?: (result: Promise<string>) => void;
-                  agentInvoked?: boolean;
-                };
-                if (submission.agentInvoked)
-                  submission.respondWith?.(Promise.resolve("Opened search results for " + query));
-              }}
-            >
-              <Search size={22} />
-              <input
-                name="query"
-                required
-                maxLength={1000}
-                aria-label={t("Search posts")}
-                placeholder={t("Search your social world")}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-              <Button type="submit" size="sm" disabled={!searchText.trim()}>
-                {t("Search")}
-              </Button>
-            </form>
-          )}
-          <div className="feed-scroll" key={route.page + route.tab + route.query + route.profile}>
-            {route.page === "plugins" ? (
-              <PluginCatalog
-                actions={actions}
-                onActions={setActions}
-                enabled={webMcpEnabled}
-                onEnable={setWebMcpEnabled}
-              />
-            ) : !accountsReady ? (
-              <div className="loading-state" role="status">
-                <LoaderCircle className="animate-spin" />
-                {t("Opening your timelines…")}
-              </div>
-            ) : route.page === "notifications" ? (
-              <Notifications accounts={accounts} refresh={refresh} onThread={setThread} />
-            ) : route.page === "saved" ? (
-              saved.length ? (
-                <div className={`timeline ${layout}`}>
-                  {saved.map((post) => (
-                    <PostCard
-                      key={postIdentity(post)}
-                      post={post}
-                      {...interactions}
-                      saved
-                      onUpdate={(updated) =>
-                        setSaved((old) =>
-                          old.map((p) => (postIdentity(p) === postIdentity(updated) ? updated : p)),
-                        )
-                      }
-                    />
-                  ))}
-                </div>
+            </aside>
+            <main className={route.page === "plugins" ? "main-panel registry-panel" : "main-panel"}>
+              {route.page === "plugins" ? (
+                <header className="registry-chrome">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={t("Back to home")}
+                    onClick={() => navigate({ page: "home" })}
+                  >
+                    <ArrowLeft />
+                  </Button>
+                  Flare Web / {t("Plugins")}
+                </header>
               ) : (
-                <div className="empty-state">
-                  <Bookmark size={30} />
-                  <h2>{t("A place for the good stuff")}</h2>
-                  <p>{t("Save a post to find it here later.")}</p>
-                </div>
-              )
-            ) : route.page === "discover" && !route.query ? (
-              <div className="empty-state">
-                <Search size={32} />
-                <h2>{t("Follow your curiosity")}</h2>
-                <p>{t("Search posts across your connected accounts.")}</p>
-              </div>
-            ) : !selected.length ? (
-              <div className="empty-state">
-                <Users size={30} />
-                <h2>{t("Connect this account")}</h2>
-                <p>{t("This timeline’s account is no longer connected.")}</p>
-                <Button onClick={() => setAccountsOpen(true)}>{t("Manage accounts")}</Button>
-              </div>
-            ) : (
-              <Timeline
-                accounts={selected}
-                source={source}
-                refresh={refresh}
-                layout={layout}
-                {...interactions}
-              />
-            )}
-          </div>
-        </main>
-        <nav className="mobile-navigation" aria-label={t("Mobile navigation")}>
-          {nav.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              aria-current={route.page === id ? "page" : undefined}
-              onClick={() => navigate({ page: id })}
-            >
-              <span>
-                <Icon size={21} />
-              </span>
-              <small>{label}</small>
-            </button>
-          ))}
-        </nav>
-        <button
-          style={route.page === "plugins" ? { display: "none" } : undefined}
-          className="mobile-compose"
-          aria-label={t("Compose post")}
-          onClick={() => compose()}
-        >
-          <PenLine size={25} />
-        </button>
-        <AccountsDialog
-          open={accountsOpen}
-          onOpenChange={setAccountsOpen}
-          accounts={accounts}
-          onChange={() => {
-            void loadAccounts();
-            setRefresh((n) => n + 1);
-          }}
-        />
-        <ComposeDialog
-          open={composeOpen}
-          onOpenChange={setComposeOpen}
-          accounts={accounts}
-          reply={reply}
-          onPublished={() => setRefresh((n) => n + 1)}
-          storageKey={storageKey}
-        />
-        <ThreadDialog post={thread} onClose={() => setThread(null)} {...interactions} />
-        <TabDialog
-          open={tabOpen}
-          onOpenChange={setTabOpen}
-          accounts={accounts}
-          onAdd={(tab) => {
-            setTabs((old) => [...old, tab]);
-            navigate({ page: "home", tab: tab.id });
-          }}
-        />
-        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogContent>
-            <DialogTitle className="text-xl font-semibold">{t("Settings")}</DialogTitle>
-            <DialogDescription className="mt-1 text-sm text-muted-foreground">
-              {t("Make Flare feel like home.")}
-            </DialogDescription>
-            <div className="mt-6 space-y-6">
-              <section>
-                <h2 className="settings-label">{t("Plugins")}</h2>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    navigate({ page: "plugins" });
-                  }}
-                >
-                  {t("Browse plugins")}
-                </Button>
-              </section>
-              <section>
-                <label>
-                  {t("Language")}
-                  <select value={preference} onChange={(e) => changeLanguage(e.target.value)}>
-                    <option value="auto">{t("Browser default")}</option>
-                    <option value="en">English</option>
-                    <option value="ja">日本語</option>
-                    <option value="zh">简体中文</option>
-                  </select>
-                </label>
-                <h2 className="settings-label">{t("Appearance")}</h2>
-                <div className="segmented-control">
-                  {(["light", "dark", "system"] as const).map((value) => (
-                    <button
-                      key={value}
-                      aria-pressed={theme === value}
-                      onClick={() => setTheme(value)}
+                <header className="page-header">
+                  <button
+                    className="mobile-avatar"
+                    aria-label={t("Manage accounts")}
+                    onClick={() => setAccountsOpen(true)}
+                  >
+                    <Avatar
+                      name={accounts[0]?.displayName || "F"}
+                      url={accounts[0]?.avatarUrl}
+                      size={34}
+                    />
+                  </button>
+                  {(route.page === "profile" || route.page === "plugins") && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("Back to home")}
+                      onClick={() => navigate({ page: "home", profile: "", account: "" })}
                     >
-                      {value === "light" ? (
-                        <Sun size={17} />
-                      ) : value === "dark" ? (
-                        <Moon size={17} />
-                      ) : (
-                        <Settings size={17} />
-                      )}
-                      <span>{t(value)}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <section>
-                <h2 className="settings-label">{t("Timeline layout")}</h2>
-                <div className="segmented-control">
-                  {(["grid", "list", "compact"] as const).map((value) => (
-                    <button
-                      key={value}
-                      aria-pressed={layout === value}
-                      onClick={() => setLayout(value)}
+                      <ArrowLeft />
+                    </Button>
+                  )}
+                  <h1>{title}</h1>
+                  <div className="header-tools">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("Refresh timeline")}
+                      onClick={() => setRefresh((n) => n + 1)}
                     >
-                      {t(value)}
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <section>
-                <h2 className="settings-label">{t("Accounts")}</h2>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setSettingsOpen(false);
-                    setAccountsOpen(true);
-                  }}
-                >
-                  <Users />
-                  {t("Manage accounts")}
-                </Button>
-              </section>
-              {tabs.length > 0 && (
-                <section>
-                  <h2 className="settings-label">{t("Custom timelines")}</h2>
-                  {tabs.map((tab) => (
-                    <div key={tab.id} className="flex items-center justify-between">
-                      <span>{tab.title}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Remove ${tab.title}`}
-                        onClick={() => {
-                          setTabs((old) => old.filter((t) => t.id !== tab.id));
-                          if (route.tab === tab.id) navigate({ tab: "mixed" });
-                        }}
-                      >
-                        <X />
-                      </Button>
-                    </div>
-                  ))}
-                </section>
+                      <RefreshCw />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("Timeline appearance")}
+                      onClick={() => setSettingsOpen(true)}
+                    >
+                      <SlidersHorizontal />
+                    </Button>
+                    <Button
+                      className="desktop-account-button"
+                      variant="secondary"
+                      onClick={() => setAccountsOpen(true)}
+                    >
+                      <Users />
+                      {accounts.length
+                        ? `${accounts.length} account${accounts.length === 1 ? "" : "s"}`
+                        : t("Add account")}
+                    </Button>
+                  </div>
+                </header>
               )}
-              <div className="flex items-center justify-between border-t border-border pt-4">
-                <span className="text-sm text-muted-foreground">{session.user!.name}</span>
-                <Button
-                  variant="ghost"
-                  onClick={async () => {
-                    await api("/auth/logout", {});
-                    location.reload();
+              {session.development && (
+                <div className="dev-indicator">
+                  {t("Development session · OIDC is available when configured")}
+                </div>
+              )}
+              {session.preview && (
+                <div className="dev-indicator">
+                  {t("Read-only preview · Trending on Mastodon")}
+                  {session.configured && (
+                    <>
+                      {" "}
+                      ·{" "}
+                      <a href="/auth/login" className="underline">
+                        {t("Sign in")}
+                      </a>
+                    </>
+                  )}
+                </div>
+              )}
+              {error && (
+                <div role="alert" className="feed-error">
+                  <p>{error}</p>
+                  <Button size="sm" onClick={() => void loadAccounts()}>
+                    {t("Retry")}
+                  </Button>
+                </div>
+              )}
+              {["home", "discover"].includes(route.page) && (
+                <div className="timeline-toolbar">
+                  <div className="timeline-tabs" role="tablist" aria-label={t("Timelines")}>
+                    <button
+                      role="tab"
+                      aria-selected={route.tab === "mixed"}
+                      onClick={() => navigate({ tab: "mixed" })}
+                    >
+                      <PlatformIcon platform="mixed" />
+                      {t("Mixed")}
+                    </button>
+                    {accounts.map((account) => (
+                      <button
+                        role="tab"
+                        key={account.id}
+                        aria-selected={route.tab === account.id}
+                        onClick={() => navigate({ tab: account.id })}
+                      >
+                        <PlatformIcon platform={account.platform} />
+                        {accounts.filter((a) => a.platform === account.platform).length > 1
+                          ? account.displayName
+                          : platformNames[account.platform]}
+                      </button>
+                    ))}
+                    {activeTabs.map((tab) => (
+                      <button
+                        role="tab"
+                        key={tab.id}
+                        aria-selected={route.tab === tab.id}
+                        onClick={() => navigate({ tab: tab.id })}
+                      >
+                        <List size={16} />
+                        {tab.title}
+                      </button>
+                    ))}
+                    <button
+                      className="add-tab"
+                      aria-label={t("Add timeline")}
+                      onClick={() => (accounts.length ? setTabOpen(true) : setAccountsOpen(true))}
+                    >
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                  <div className="layout-controls" aria-label={t("Timeline layout")}>
+                    {(
+                      [
+                        { id: "grid", label: t("Grid view"), icon: LayoutGrid },
+                        { id: "list", label: t("List view"), icon: List },
+                        { id: "compact", label: t("Compact view"), icon: AlignLeft },
+                      ] as const
+                    ).map(({ id, label, icon: Icon }) => (
+                      <button
+                        key={id}
+                        aria-label={label}
+                        aria-pressed={layout === id}
+                        onClick={() => setLayout(id)}
+                      >
+                        <Icon size={17} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {route.page === "discover" && (
+                <form
+                  className="search-box"
+                  {...(webMcpEnabled ? webMcpSearch : {})}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const query = String(new FormData(e.currentTarget).get("query") ?? "").trim();
+                    if (!query) return;
+                    setSearchText(query);
+                    navigate({ query });
+                    const submission = e.nativeEvent as SubmitEvent & {
+                      respondWith?: (result: Promise<string>) => void;
+                      agentInvoked?: boolean;
+                    };
+                    if (submission.agentInvoked)
+                      submission.respondWith?.(
+                        Promise.resolve("Opened search results for " + query),
+                      );
                   }}
                 >
-                  <LogOut />
-                  {t("Sign out")}
-                </Button>
+                  <Search size={22} />
+                  <input
+                    name="query"
+                    required
+                    maxLength={1000}
+                    aria-label={t("Search posts")}
+                    placeholder={t("Search your social world")}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                  />
+                  <Button type="submit" size="sm" disabled={!searchText.trim()}>
+                    {t("Search")}
+                  </Button>
+                </form>
+              )}
+              <div
+                className="feed-scroll"
+                key={route.page + route.tab + route.query + route.profile}
+              >
+                {route.page === "profile" && actions.includes("flare.profile-links") && (
+                  <ProfileLinks
+                    accounts={available}
+                    accountId={route.account}
+                    handle={route.profile}
+                    open={(account, profile) => navigate({ page: "profile", account, profile })}
+                  />
+                )}
+                {route.page === "plugins" ? (
+                  <PluginCatalog
+                    actions={actions}
+                    onActions={setActions}
+                    enabled={webMcpEnabled}
+                    onEnable={setWebMcpEnabled}
+                  />
+                ) : !accountsReady ? (
+                  <div className="loading-state" role="status">
+                    <LoaderCircle className="animate-spin" />
+                    {t("Opening your timelines…")}
+                  </div>
+                ) : route.page === "notifications" ? (
+                  <Notifications accounts={accounts} refresh={refresh} onThread={setThread} />
+                ) : route.page === "saved" ? (
+                  saved.length || (actions.includes("flare.updates") && watches.length) ? (
+                    <div className={`timeline ${layout}`}>
+                      {actions.includes("flare.updates") && <FollowUps refresh={refresh} />}
+                      {actions.includes("flare.notes") && (
+                        <label>
+                          {t("Search private notes")}
+                          <input
+                            type="search"
+                            value={noteQuery}
+                            onChange={(e) => setNoteQuery(e.target.value)}
+                          />
+                        </label>
+                      )}
+                      {saved
+                        .filter(
+                          (p) =>
+                            !actions.includes("flare.notes") ||
+                            (notes[postIdentity(p)] ?? "")
+                              .toLocaleLowerCase()
+                              .includes(noteQuery.trim().toLocaleLowerCase()),
+                        )
+                        .map((post) => (
+                          <PostCard
+                            key={postIdentity(post)}
+                            post={post}
+                            {...interactions}
+                            saved
+                            onUpdate={(updated) =>
+                              setSaved((old) =>
+                                old.map((p) =>
+                                  postIdentity(p) === postIdentity(updated) ? updated : p,
+                                ),
+                              )
+                            }
+                          />
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="empty-state">
+                      <Bookmark size={30} />
+                      <h2>{t("A place for the good stuff")}</h2>
+                      <p>{t("Save a post to find it here later.")}</p>
+                    </div>
+                  )
+                ) : route.page === "discover" && !route.query ? (
+                  <div className="empty-state">
+                    <Search size={32} />
+                    <h2>{t("Follow your curiosity")}</h2>
+                    <p>{t("Search posts across your connected accounts.")}</p>
+                  </div>
+                ) : !selected.length ? (
+                  <div className="empty-state">
+                    <Users size={30} />
+                    <h2>{t("Connect this account")}</h2>
+                    <p>{t("This timeline’s account is no longer connected.")}</p>
+                    <Button onClick={() => setAccountsOpen(true)}>{t("Manage accounts")}</Button>
+                  </div>
+                ) : (
+                  <Timeline
+                    sources={route.page === "home" ? custom?.sources : undefined}
+                    preferencesKey={storageKey + ":feed-filter:" + route.page + ":" + route.tab}
+                    accounts={selected}
+                    source={source}
+                    refresh={refresh}
+                    layout={layout}
+                    {...interactions}
+                  />
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {t("Flare Web · Based on Flare for Android · AGPL-3.0")}
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </EnabledActions.Provider>
+            </main>
+            <nav className="mobile-navigation" aria-label={t("Mobile navigation")}>
+              {nav.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  aria-current={route.page === id ? "page" : undefined}
+                  onClick={() => navigate({ page: id })}
+                >
+                  <span>
+                    <Icon size={21} />
+                  </span>
+                  <small>{label}</small>
+                </button>
+              ))}
+            </nav>
+            <button
+              style={route.page === "plugins" ? { display: "none" } : undefined}
+              className="mobile-compose"
+              aria-label={t("Compose post")}
+              onClick={() => compose()}
+            >
+              <PenLine size={25} />
+            </button>
+            <AccountsDialog
+              open={accountsOpen}
+              onOpenChange={setAccountsOpen}
+              accounts={accounts}
+              onChange={() => {
+                void loadAccounts();
+                setRefresh((n) => n + 1);
+              }}
+            />
+            <ComposeDialog
+              open={composeOpen}
+              onOpenChange={setComposeOpen}
+              accounts={accounts}
+              reply={reply}
+              onPublished={() => setRefresh((n) => n + 1)}
+              storageKey={storageKey}
+            />
+            <ThreadDialog post={thread} onClose={() => setThread(null)} {...interactions} />
+            <TabDialog
+              open={tabOpen}
+              onOpenChange={setTabOpen}
+              accounts={accounts}
+              onAdd={(tab) => {
+                setTabs((old) => [...old, tab]);
+                navigate({ page: "home", tab: tab.id });
+              }}
+            />
+            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <DialogContent>
+                <DialogTitle className="text-xl font-semibold">{t("Settings")}</DialogTitle>
+                <DialogDescription className="mt-1 text-sm text-muted-foreground">
+                  {t("Make Flare feel like home.")}
+                </DialogDescription>
+                <div className="mt-6 space-y-6">
+                  <section>
+                    <h2 className="settings-label">{t("Plugins")}</h2>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        navigate({ page: "plugins" });
+                      }}
+                    >
+                      {t("Browse plugins")}
+                    </Button>
+                  </section>
+                  <section>
+                    <label>
+                      {t("Language")}
+                      <select value={preference} onChange={(e) => changeLanguage(e.target.value)}>
+                        <option value="auto">{t("Browser default")}</option>
+                        <option value="en">English</option>
+                        <option value="ja">日本語</option>
+                        <option value="zh">简体中文</option>
+                      </select>
+                    </label>
+                    <h2 className="settings-label">{t("Appearance")}</h2>
+                    <div className="segmented-control">
+                      {(["light", "dark", "system"] as const).map((value) => (
+                        <button
+                          key={value}
+                          aria-pressed={theme === value}
+                          onClick={() => setTheme(value)}
+                        >
+                          {value === "light" ? (
+                            <Sun size={17} />
+                          ) : value === "dark" ? (
+                            <Moon size={17} />
+                          ) : (
+                            <Settings size={17} />
+                          )}
+                          <span>{t(value)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                  <section>
+                    <h2 className="settings-label">{t("Timeline layout")}</h2>
+                    <div className="segmented-control">
+                      {(["grid", "list", "compact"] as const).map((value) => (
+                        <button
+                          key={value}
+                          aria-pressed={layout === value}
+                          onClick={() => setLayout(value)}
+                        >
+                          {t(value)}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                  <section>
+                    <h2 className="settings-label">{t("Accounts")}</h2>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setSettingsOpen(false);
+                        setAccountsOpen(true);
+                      }}
+                    >
+                      <Users />
+                      {t("Manage accounts")}
+                    </Button>
+                  </section>
+                  {tabs.length > 0 && (
+                    <section>
+                      <h2 className="settings-label">{t("Custom timelines")}</h2>
+                      {tabs.map((tab) => (
+                        <div key={tab.id} className="flex items-center justify-between">
+                          <span>{tab.title}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Remove ${tab.title}`}
+                            onClick={() => {
+                              setTabs((old) => old.filter((t) => t.id !== tab.id));
+                              if (route.tab === tab.id) navigate({ tab: "mixed" });
+                            }}
+                          >
+                            <X />
+                          </Button>
+                        </div>
+                      ))}
+                    </section>
+                  )}
+                  <div className="flex items-center justify-between border-t border-border pt-4">
+                    <span className="text-sm text-muted-foreground">{session.user!.name}</span>
+                    <Button
+                      variant="ghost"
+                      onClick={async () => {
+                        await api("/auth/logout", {});
+                        location.reload();
+                      }}
+                    >
+                      <LogOut />
+                      {t("Sign out")}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("Flare Web · Based on Flare for Android · AGPL-3.0")}
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </EnabledActions.Provider>
+      </Notes.Provider>
+    </Watches.Provider>
   );
 }

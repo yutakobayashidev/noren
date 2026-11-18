@@ -1,3 +1,4 @@
+import { profileLinks } from "./profile-links";
 import { blueskyConnectionRouter } from "./bluesky-oauth";
 import { nostrRouter, nostrFeed, nostrThread, publishNostr, signedEvent } from "./adapters/nostr";
 import { connectionRouter } from "./connections";
@@ -56,7 +57,7 @@ export function apiRouter() {
       !(
         (req.method === "GET" && req.path === "/accounts") ||
         (req.method === "POST" &&
-          ["/timeline", "/thread"].includes(req.path) &&
+          ["/timeline", "/thread", "/profile-links"].includes(req.path) &&
           req.body?.accountId === "guest")
       )
     ) {
@@ -217,6 +218,19 @@ export function apiRouter() {
           : await mastodonNotifications(account),
     });
   });
+  router.post("/profile-links", async (req, res) => {
+    const { accountId, handle } = z
+      .object({ accountId: z.string(), handle: z.string().min(1).max(512) })
+      .parse(req.body);
+    const store: AccountStore = res.locals.store;
+    res.json({
+      links: await profileLinks(
+        accountId === "guest" ? guest : store.get(accountId),
+        handle,
+        store,
+      ),
+    });
+  });
   router.post("/thread", async (req, res) => {
     const input = postSchema.parse(req.body);
     const store: AccountStore = res.locals.store;
@@ -351,7 +365,16 @@ export function apiRouter() {
     const input = z
       .object({
         accountIds: z.array(z.string()).min(1).max(10),
-        text: z.string().trim().min(1).max(10000),
+        text: z.string().trim().max(10000),
+        variants: z
+          .record(
+            z.string(),
+            z.object({
+              text: z.string().trim().max(10000).optional(),
+              warning: z.string().max(500).optional(),
+            }),
+          )
+          .optional(),
         reply: postSchema.optional(),
         signedEvents: z.record(z.string(), signedEvent).optional(),
       })
@@ -363,12 +386,15 @@ export function apiRouter() {
     const results = await Promise.all(
       accounts.map(async (account) => {
         try {
+          const variant = input.variants?.[account.id];
+          const body = variant?.text ?? input.text;
+          if (!body.trim()) throw new Error("Post text required");
           if (!account.canPost) throw new Error("This feed is read-only.");
           if (account.platform === "nostr") {
             await publishNostr(
               account,
               input.signedEvents?.[account.id],
-              input.text,
+              body,
               input.reply?.nativeId,
             );
             return { accountId: account.id, ok: true };
@@ -379,28 +405,29 @@ export function apiRouter() {
             [
               ...new Intl.Segmenter(undefined, {
                 granularity: "grapheme",
-              }).segment(input.text),
+              }).segment(body),
             ].length > limit
           )
             throw new Error(`This account supports up to ${limit} characters.`);
           if (account.platform === "mastodon")
             await mastodonRequest(account, "/api/v1/statuses", {
-              status: input.text,
+              status: body,
               visibility: "public",
+              spoiler_text: variant?.warning,
               in_reply_to_id: input.reply?.nativeId,
             });
           else if (account.platform === "misskey")
             await misskeyRequest(account, "notes/create", {
-              text: input.text,
+              text: body,
               replyId: input.reply?.nativeId,
             });
           else if (account.platform === "bluesky")
-            await blueskyPublish(account, store, input.text, input.reply as SocialPost | undefined);
+            await blueskyPublish(account, store, body, input.reply as SocialPost | undefined);
           else {
             const client = twitterClient(account);
             const result = input.reply
-              ? await client.reply(input.text, input.reply.nativeId)
-              : await client.tweet(input.text);
+              ? await client.reply(body, input.reply.nativeId)
+              : await client.tweet(body);
             if (!result.success) throw new Error("X could not publish this post.");
           }
           return { accountId: account.id, ok: true };
