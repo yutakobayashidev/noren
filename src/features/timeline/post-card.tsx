@@ -235,7 +235,7 @@ export function PostCard({
               onClick={() => action("repost")}
               aria-label={post.reposted ? "Undo repost" : "Repost"}
               aria-pressed={!!post.reposted}
-              disabled={!!busy || post.accountId === "guest"}
+              disabled={!!busy || post.readOnly || post.accountId === "guest"}
               className={post.reposted ? "reposted" : ""}
             >
               {busy === "repost" ? (
@@ -249,7 +249,7 @@ export function PostCard({
               onClick={() => action("like")}
               aria-label={post.liked ? "Unlike" : "Like"}
               aria-pressed={!!post.liked}
-              disabled={!!busy || post.accountId === "guest"}
+              disabled={!!busy || post.readOnly || post.accountId === "guest"}
               className={post.liked ? "liked" : ""}
             >
               {busy === "like" ? (
@@ -274,7 +274,7 @@ export function PostCard({
             >
               <ExternalLink size={16} />
             </a>
-            {post.accountId !== "guest" && (
+            {!post.readOnly && post.accountId !== "guest" && (
               <button className="reply-label" onClick={() => onReply(post)}>
                 Reply
               </button>

@@ -1,6 +1,13 @@
 import { connectionRouter } from "./connections";
 import { Router } from "express";
-import { randomUUID } from "node:crypto";
+import { rssFeed } from "./adapters/rss";
+import {
+  misskeyFeed,
+  misskeyRequest,
+  mapMisskey,
+  misskeyNotifications,
+} from "./adapters/misskey";
+import { createHash, randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { z } from "zod";
 import { BskyAgent } from "@atproto/api";
@@ -93,6 +100,10 @@ export function apiRouter() {
     const input = z
       .discriminatedUnion("platform", [
         z.object({
+          platform: z.literal("rss"),
+          feedUrl: z.string().url().max(2000),
+        }),
+        z.object({
           platform: z.literal("mastodon"),
           origin: z.string().max(300),
           token: z.string().min(1).max(4000),
@@ -111,7 +122,20 @@ export function apiRouter() {
       .parse(req.body);
     const store: AccountStore = res.locals.store;
     let account: StoredAccount;
-    if (input.platform === "mastodon") {
+    if (input.platform === "rss") {
+      const url = new URL(input.feedUrl);
+      await publicOrigin(url.origin);
+      account = {
+        platform: "rss",
+        id: "rss:" + createHash("sha256").update(url.href).digest("hex"),
+        origin: url.origin,
+        feedUrl: url.href,
+        displayName: url.host,
+        handle: url.host,
+        canPost: false,
+      };
+      account.displayName = (await rssFeed(account)).title;
+    } else if (input.platform === "mastodon") {
       const origin = await publicOrigin(input.origin);
       const provisional = {
         id: randomUUID(),
@@ -191,6 +215,14 @@ export function apiRouter() {
       .parse(req.body);
     const store: AccountStore = res.locals.store;
     const account = accountId === "guest" ? guest : store.get(accountId);
+    if (account.platform === "misskey") {
+      res.json(await misskeyFeed(account, source, cursor));
+      return;
+    }
+    if (account.platform === "rss") {
+      res.json((await rssFeed(account, source)).page);
+      return;
+    }
     const page =
       account.platform === "twitter"
         ? await twitterFeed(account, source, cursor)
@@ -202,7 +234,11 @@ export function apiRouter() {
   router.get("/notifications", async (req, res) => {
     const store: AccountStore = res.locals.store;
     const account = store.get(z.string().parse(req.query.accountId));
-    if (account.platform === "twitter") {
+    if (account.platform === "misskey") {
+      res.json({ notifications: await misskeyNotifications(account) });
+      return;
+    }
+    if (account.platform === "twitter" || account.platform === "rss") {
       res.json({ notifications: [], unsupported: true });
       return;
     }
@@ -218,6 +254,28 @@ export function apiRouter() {
     const store: AccountStore = res.locals.store;
     const account =
       input.accountId === "guest" ? guest : store.get(input.accountId);
+    if (account.platform === "rss") {
+      res.json({
+        posts: (await rssFeed(account)).page.posts.filter(
+          (p) => p.nativeId === input.nativeId,
+        ),
+      });
+      return;
+    }
+    if (account.platform === "misskey") {
+      const params = { noteId: input.nativeId };
+      const [ancestors, note, replies] = await Promise.all(
+        ["notes/conversation", "notes/show", "notes/replies"].map((path) =>
+          misskeyRequest(account, path, params),
+        ),
+      );
+      res.json({
+        posts: [...ancestors.data.reverse(), note.data, ...replies.data].map(
+          (n) => mapMisskey(n, account),
+        ),
+      });
+      return;
+    }
     if (account.platform === "mastodon") {
       const path = `/api/v1/statuses/${encodeURIComponent(input.nativeId)}`;
       const [{ data: post }, { data: context }] = await Promise.all([
@@ -262,6 +320,27 @@ export function apiRouter() {
       .parse(req.body);
     const store: AccountStore = res.locals.store;
     const account = store.get(input.accountId);
+    if (!account.canPost) throw new Error("This feed is read-only.");
+    if (account.platform === "misskey") {
+      const path = {
+        like: "notes/reactions/create",
+        unlike: "notes/reactions/delete",
+        repost: "notes/create",
+        unrepost: "notes/unrenote",
+      }[input.action];
+      await misskeyRequest(
+        account,
+        path,
+        input.action === "repost"
+          ? { renoteId: input.nativeId }
+          : {
+              noteId: input.nativeId,
+              ...(input.action === "like" ? { reaction: "❤️" } : {}),
+            },
+      );
+      res.json({ ok: true });
+      return;
+    }
     if (account.platform === "mastodon") {
       const actions = {
         like: "favourite",
@@ -323,6 +402,7 @@ export function apiRouter() {
     const results = await Promise.all(
       accounts.map(async (account) => {
         try {
+          if (!account.canPost) throw new Error("This feed is read-only.");
           const limit =
             account.platform === "bluesky"
               ? 300
@@ -342,6 +422,11 @@ export function apiRouter() {
               status: input.text,
               visibility: "public",
               in_reply_to_id: input.reply?.nativeId,
+            });
+          else if (account.platform === "misskey")
+            await misskeyRequest(account, "notes/create", {
+              text: input.text,
+              replyId: input.reply?.nativeId,
             });
           else if (account.platform === "bluesky")
             await blueskyPublish(
@@ -386,6 +471,11 @@ export function apiRouter() {
       res.json({
         lists: data.lists.map((l) => ({ id: l.uri, title: l.name })),
       });
+    } else if (account.platform === "rss") {
+      res.json({ lists: [] });
+    } else if (account.platform === "misskey") {
+      const { data } = await misskeyRequest(account, "users/lists/list");
+      res.json({ lists: data.map((l: any) => ({ id: l.id, title: l.name })) });
     } else {
       const data = await twitterClient(account).getLists(100);
       if (!data.success) throw new Error("Could not load lists.");

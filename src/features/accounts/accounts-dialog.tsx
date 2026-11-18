@@ -60,9 +60,12 @@ export function AccountsDialog({
     setError("");
     const values = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      if (platform === "mastodon" && mastodonMethod === "oauth") {
+      if (
+        platform === "misskey" ||
+        (platform === "mastodon" && mastodonMethod === "oauth")
+      ) {
         const { url } = await api<{ url: string }>(
-          "/api/connect/mastodon",
+          "/api/connect/" + platform,
           values,
         );
         window.location.assign(url);
@@ -133,7 +136,9 @@ export function AccountsDialog({
               </div>
             ))}
             <div className="grid gap-2">
-              {(["mastodon", "bluesky", "twitter"] as const).map((p) => (
+              {(
+                ["mastodon", "bluesky", "twitter", "misskey", "rss"] as const
+              ).map((p) => (
                 <button
                   key={p}
                   onClick={() => {
@@ -151,6 +156,18 @@ export function AccountsDialog({
           </div>
         ) : (
           <form onSubmit={connect} className="mt-6 space-y-4">
+            {platform === "rss" && (
+              <label>
+                RSS or Atom feed URL
+                <input type="url" name="feedUrl" required />
+              </label>
+            )}
+            {platform === "misskey" && (
+              <label>
+                Misskey server
+                <input name="origin" placeholder="misskey.io" required />
+              </label>
+            )}
             {platform === "mastodon" && (
               <>
                 <label>
