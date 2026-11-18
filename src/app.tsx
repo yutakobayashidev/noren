@@ -318,61 +318,79 @@ function Workspace({ session }: { session: Session }) {
           </button>
         </div>
       </aside>
-      <main className="main-panel">
-        <header className="page-header">
-          <button
-            className="mobile-avatar"
-            aria-label={t("Manage accounts")}
-            onClick={() => setAccountsOpen(true)}
-          >
-            <Avatar
-              name={accounts[0]?.displayName || "F"}
-              url={accounts[0]?.avatarUrl}
-              size={34}
-            />
-          </button>
-          {(route.page === "profile" || route.page === "plugins") && (
+      <main
+        className={
+          route.page === "plugins" ? "main-panel registry-panel" : "main-panel"
+        }
+      >
+        {route.page === "plugins" ? (
+          <header className="registry-chrome">
             <Button
-              variant="ghost"
               size="icon"
+              variant="ghost"
               aria-label={t("Back to home")}
-              onClick={() =>
-                navigate({ page: "home", profile: "", account: "" })
-              }
+              onClick={() => navigate({ page: "home" })}
             >
               <ArrowLeft />
             </Button>
-          )}
-          <h1>{title}</h1>
-          <div className="header-tools">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("Refresh timeline")}
-              onClick={() => setRefresh((n) => n + 1)}
-            >
-              <RefreshCw />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("Timeline appearance")}
-              onClick={() => setSettingsOpen(true)}
-            >
-              <SlidersHorizontal />
-            </Button>
-            <Button
-              className="desktop-account-button"
-              variant="secondary"
+            Flare Web / {t("Plugins")}
+          </header>
+        ) : (
+          <header className="page-header">
+            <button
+              className="mobile-avatar"
+              aria-label={t("Manage accounts")}
               onClick={() => setAccountsOpen(true)}
             >
-              <Users />
-              {accounts.length
-                ? `${accounts.length} account${accounts.length === 1 ? "" : "s"}`
-                : t("Add account")}
-            </Button>
-          </div>
-        </header>
+              <Avatar
+                name={accounts[0]?.displayName || "F"}
+                url={accounts[0]?.avatarUrl}
+                size={34}
+              />
+            </button>
+            {(route.page === "profile" || route.page === "plugins") && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("Back to home")}
+                onClick={() =>
+                  navigate({ page: "home", profile: "", account: "" })
+                }
+              >
+                <ArrowLeft />
+              </Button>
+            )}
+            <h1>{title}</h1>
+            <div className="header-tools">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("Refresh timeline")}
+                onClick={() => setRefresh((n) => n + 1)}
+              >
+                <RefreshCw />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("Timeline appearance")}
+                onClick={() => setSettingsOpen(true)}
+              >
+                <SlidersHorizontal />
+              </Button>
+              <Button
+                className="desktop-account-button"
+                variant="secondary"
+                onClick={() => setAccountsOpen(true)}
+              >
+                <Users />
+                {accounts.length
+                  ? `${accounts.length} account${accounts.length === 1 ? "" : "s"}`
+                  : t("Add account")}
+              </Button>
+            </div>
+          </header>
+        )}
         {session.development && (
           <div className="dev-indicator">
             {t("Development session · OIDC is available when configured")}
@@ -596,6 +614,7 @@ function Workspace({ session }: { session: Session }) {
         ))}
       </nav>
       <button
+        style={route.page === "plugins" ? { display: "none" } : undefined}
         className="mobile-compose"
         aria-label={t("Compose post")}
         onClick={() => compose()}

@@ -204,5 +204,12 @@
   "Let a browser assistant open a search across your connected accounts while Discover is open.": [
     "「見つける」を開いている間、ブラウザのアシスタントから接続済みアカウントの投稿を検索できます。",
     "在「发现」页面，浏览器助手可以搜索已连接账号中的帖子。"
-  ]
+  ],
+  "Plugin registry": ["プラグインレジストリ", "插件目录"],
+  "All plugins": ["すべて", "全部插件"],
+  "Enabled plugins": ["有効なプラグイン", "已启用"],
+  "No enabled plugins": ["有効なプラグインはありません", "暂无启用的插件"],
+  "Developer": ["作者", "开发者"],
+  "Documentation": ["ドキュメント", "文档"],
+  "Browser tools": ["ブラウザツール", "浏览器工具"]
 }
