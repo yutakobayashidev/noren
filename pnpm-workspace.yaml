@@ -1,0 +1,4 @@
+onlyBuiltDependencies:
+  - esbuild
+patchedDependencies:
+  "@yuta/bird@0.10.1": patches/@yuta__bird@0.10.1.patch
