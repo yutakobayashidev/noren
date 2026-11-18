@@ -1,4 +1,4 @@
-{ lib, stdenv, nodejs_24, pnpm_10, fetchPnpmDeps, pnpmConfigHook, makeWrapper }:
+{ lib, stdenv, nodejs_24, pnpm_10, fetchPnpmDeps, pnpmConfigHook, makeWrapper, plugins ? [] }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "flare-web";
   version = "0.1.0";
@@ -16,6 +16,13 @@ stdenv.mkDerivation (finalAttrs: {
     fetcherVersion = 4;
     hash = "sha256-u6E71flYOuoag14ROie2mV6dPirtMDpjhC25HhNwv38=";
   };
+  preBuild = lib.concatImapStringsSep "\n" (i: plugin: let src = lib.escapeShellArg (builtins.toString (if builtins.isPath plugin then builtins.path { path = plugin; name = "flare-plugin"; } else plugin)); in ''
+    mkdir plugins/external-${toString i}
+    for file in manifest.json action.js; do
+      test -f ${src}/"$file" && test ! -L ${src}/"$file" || exit 1
+      cp ${src}/"$file" plugins/external-${toString i}/
+    done
+  '') plugins;
   buildPhase = ''
     runHook preBuild
     pnpm build

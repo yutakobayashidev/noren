@@ -1,6 +1,6 @@
 import { postActions, EnabledActions } from "../../plugins/post-actions";
 import { t } from "../../lib/i18n";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import { Heart, Repeat2, MessageCircle, Bookmark, ExternalLink, LoaderCircle } from "lucide-react";
 import type { SocialPost } from "../../domain/model";
 import { PlatformIcon, Avatar } from "../../components/platform";
@@ -69,6 +69,13 @@ export function PostCard({
 }) {
   const enabledActions = useContext(EnabledActions);
   const [pluginResult, setPluginResult] = useState("");
+  const job = useRef<AbortController | null>(null);
+  const [inline, setInline] = useState<{ grant: string; text: string } | null>(null);
+  useEffect(() => {
+    setInline(null);
+    setPluginResult("");
+    return () => job.current?.abort();
+  }, [enabledActions, post.key, post.accountId, post.text]);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -158,6 +165,11 @@ export function PostCard({
                   <PostText text={post.text} />
                 )}
               </div>
+              {inline && enabledActions.includes(inline.grant) && (
+                <p className="post-text border-l-2 pl-3" role="status">
+                  {inline.text}
+                </p>
+              )}
               {!!post.media?.length && (
                 <div className={`post-media media-${Math.min(2, post.media.length)}`}>
                   {post.media.map((item, i) =>
@@ -254,18 +266,26 @@ export function PostCard({
               <ExternalLink size={16} />
             </a>
             {postActions
-              .filter((action) => enabledActions.includes(action.id))
+              .filter((action) => !concealed && enabledActions.includes(action.grant))
               .map((action) => (
                 <button
                   key={action.id}
                   onClick={async () => {
+                    job.current?.abort();
+                    const controller = new AbortController();
+                    job.current = controller;
                     try {
-                      const run = await action.load();
-                      const result = await run({ post: { text: post.text, url: post.url } });
-                      if (result.kind !== "copyText" || typeof result.text !== "string")
-                        throw new Error("Invalid plugin output");
-                      setPluginResult(result.text);
+                      setError("");
+                      const result = await action.run(
+                        { post: { text: post.text, url: post.url } },
+                        controller.signal,
+                      );
+                      if (controller.signal.aborted) return;
+                      if (result.kind === "inlineText")
+                        setInline({ grant: action.grant, text: result.text });
+                      else setPluginResult(result.text);
                     } catch (e) {
+                      if (controller.signal.aborted) return;
                       setError(errorMessage(e));
                     }
                   }}

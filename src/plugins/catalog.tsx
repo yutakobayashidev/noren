@@ -34,7 +34,7 @@ export function PluginCatalog({
       .includes(query.trim().toLocaleLowerCase());
   const matchingActions = postActions.filter(
     (a) =>
-      (!activeOnly || actions.includes(a.id)) &&
+      (!activeOnly || actions.includes(a.grant)) &&
       (a.name + " " + a.author).toLowerCase().includes(query.trim().toLowerCase()),
   );
   return (
@@ -58,7 +58,11 @@ export function PluginCatalog({
       <div className="registry-filters">
         {[
           [false, "All plugins", 1 + postActions.length],
-          [true, "Enabled plugins", Number(enabled) + actions.length],
+          [
+            true,
+            "Enabled plugins",
+            Number(enabled) + postActions.filter((a) => actions.includes(a.grant)).length,
+          ],
         ].map(([active, label, count]) => (
           <button
             key={String(label)}
@@ -119,11 +123,13 @@ export function PluginCatalog({
           <button
             onClick={() =>
               onActions(
-                actions.includes(a.id) ? actions.filter((id) => id !== a.id) : [...actions, a.id],
+                actions.includes(a.grant)
+                  ? actions.filter((id) => id !== a.grant)
+                  : [...actions, a.grant],
               )
             }
           >
-            {t(actions.includes(a.id) ? "Disable plugin" : "Enable plugin")}
+            {t(actions.includes(a.grant) ? "Disable plugin" : "Enable plugin")}
           </button>
         </article>
       ))}

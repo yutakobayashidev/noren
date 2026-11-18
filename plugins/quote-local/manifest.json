@@ -1,0 +1,10 @@
+{
+  "apiVersion": 2,
+  "id": "flare.quote-text",
+  "version": "1.0.0",
+  "author": "Flare Web",
+  "name": {"en":"Quote text","ja":"本文を引用","zh":"引用正文"},
+  "action": "quote",
+  "permissions": ["post.text"],
+  "entry": "./action.js"
+}

@@ -125,3 +125,34 @@ test("mobile layout has no horizontal overflow and dialogs restore focus", async
   await page.goBack();
   await expect(page.getByRole("textbox", { name: "Search posts" })).toHaveValue("");
 });
+test("an enabled isolated quote action receives the selected post", async ({ page }) => {
+  await fixture(page);
+  await page.goto("/#page=plugins");
+  await page
+    .locator("article")
+    .filter({ has: page.getByRole("heading", { name: "Quote text" }) })
+    .getByRole("button", { name: "Enable plugin" })
+    .click();
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quote text" }).click();
+  await expect(page.getByRole("textbox", { name: "Plugin output" })).toHaveValue("> " + post.text);
+});
+
+test("sandboxed actions have no DOM, origin storage or network access", async ({ page }) => {
+  await fixture(page);
+  const result = await page.evaluate(async () => {
+    const modulePath = "/src/plugins/sandbox.ts";
+    const { runIsolated } = await import(modulePath);
+    return runIsolated(
+      `exports.default = async () => {
+      let network = false, storage = false;
+      try { await fetch("https://example.org/"); network = true; } catch {}
+      try { await caches.open("test"); storage = true; } catch {}
+      return {kind:"inlineText",text:JSON.stringify([typeof document, network, storage])};
+    };`,
+      {},
+      new AbortController().signal,
+    );
+  });
+  expect(JSON.parse(result.text)).toEqual(["undefined", false, false]);
+});
