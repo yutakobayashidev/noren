@@ -1,10 +1,16 @@
 ---
+import { localizedPath, translator, type Locale } from "../locales";
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = translator(locale);
 import Shell from "../Shell.astro";
 import { clientPage, sitePage } from "../links";
 import code from "../../../../packages/plugin-starter/action.js?raw";
 ---
 
-<Shell title="ホーム">
+<Shell locale={locale} title={t("ホーム", "Home", "首页")}>
   <section class="feature" aria-labelledby="headline">
     <img
       class="field"
@@ -14,21 +20,24 @@ import code from "../../../../packages/plugin-starter/action.js?raw";
     />
     <div class="feature-copy">
       <h1 id="headline">
-        いくつもの SNS を、
+        {t("いくつもの SNS を、", "Many networks.", "多个社交网络，")}
         <br />
-        ひとつのホームに。
+        {t("ひとつのホームに。", "One home.", "一个主页。")}
       </h1>
       <p>
-        Noren
-        は、アカウントをまたいで投稿を読み、届けたい場所を選んで書けるソーシャルクライアントです。
+        {t(
+          "Noren は、アカウントをまたいで投稿を読み、届けたい場所を選んで書けるソーシャルクライアントです。",
+          "Read across accounts, then choose where your next post goes.",
+          "在一个时间线里阅读各账号的帖子，发帖时自己决定要发到哪里。",
+        )}
       </p>
       <a class="launch" href={clientPage()}>
-        Noren を開く <span>↗</span>
+        {t("Noren を開く", "Open Noren", "打开 Noren")} <span>↗</span>
       </a>
     </div>
   </section>
   <section class="networks">
-    <h2>対応する SNS</h2>
+    <h2>{t("対応する SNS", "Connected networks", "支持的网络")}</h2>
     <ul>
       {["X", "Mastodon", "Bluesky", "Misskey", "Nostr"].map((network) => (
         <li>{network}</li>
@@ -38,13 +47,16 @@ import code from "../../../../packages/plugin-starter/action.js?raw";
   <section class="tour">
     <div>
       <h2>
-        読む場所も、
+        {t("読む場所も、", "Room to read.", "在这里阅读，")}
         <br />
-        書く場所も。
+        {t("書く場所も。", "Space to write.", "也在这里写作。")}
       </h2>
       <p>
-        ホームでは複数の SNS
-        の投稿を時系列で。投稿画面では、ひとつの下書きから送信先を選べます。
+        {t(
+          "ホームでは複数の SNS の投稿を時系列で。投稿画面では、ひとつの下書きから送信先を選べます。",
+          "Follow several networks in chronological order. Start with one draft and edit it for each destination.",
+          "按时间顺序浏览各网络的帖子，用同一份草稿为不同账号分别编辑。",
+        )}
       </p>
     </div>
     <figure class="showcase">
@@ -54,29 +66,37 @@ import code from "../../../../packages/plugin-starter/action.js?raw";
           width="585"
           height="1080"
           src={sitePage("screens/timeline.png")}
-          alt="サンプル投稿を表示した統合タイムライン"
+          alt={t(
+            "サンプル投稿を表示した統合タイムライン",
+            "A mixed timeline with sample posts",
+            "展示示例帖子的混合时间线",
+          )}
         />
       </div>
       <figcaption>
         <button
           aria-pressed="true"
           data-screen={sitePage("screens/timeline.png")}
-          data-alt="統合タイムライン"
+          data-alt={t("統合タイムライン", "Mixed timeline", "混合时间线")}
         >
-          タイムライン
+          {t("タイムライン", "Timeline", "时间线")}
         </button>
         <button
           aria-pressed="false"
           data-screen={sitePage("screens/compose.png")}
-          data-alt="投稿先のアカウントを選ぶ画面"
+          data-alt={t(
+            "投稿先のアカウントを選ぶ画面",
+            "Choosing destination accounts",
+            "选择发帖账号",
+          )}
         >
-          投稿画面
+          {t("投稿画面", "Composer", "发帖界面")}
         </button>
       </figcaption>
     </figure>
   </section>
   <section class="extensions">
-    <h2>Noren を拡張する</h2>
+    <h2>{t("Noren を拡張する", "Extend Noren", "扩展 Noren")}</h2>
     <div class="stories">
       <a href={clientPage("#page=plugins")}>
         <div class="art">
@@ -89,11 +109,17 @@ import code from "../../../../packages/plugin-starter/action.js?raw";
           />
         </div>
         <h3>
-          プラグインを探す <span>↗</span>
+          {t("プラグインを探す", "Explore plugins", "浏览插件")} <span>↗</span>
         </h3>
-        <p>投稿の引用やブラウザからの検索など、使いたい機能を選べます。</p>
+        <p>
+          {t(
+            "投稿の引用やブラウザからの検索など、使いたい機能を選べます。",
+            "Enable post actions and browser tools as you need them.",
+            "按需启用帖子操作和浏览器工具。",
+          )}
+        </p>
       </a>
-      <a href={sitePage("plugins/")}>
+      <a href={localizedPath(locale, "plugins/")}>
         <div class="source-art" aria-hidden="true">
           <div>
             <small>action.js</small>
@@ -101,20 +127,25 @@ import code from "../../../../packages/plugin-starter/action.js?raw";
           </div>
         </div>
         <h3>
-          作者ガイドを読む <span>→</span>
+          {t("作者ガイドを読む", "Write a plugin", "编写插件")} <span>→</span>
         </h3>
         <p>
-          サンプル投稿で試しながら、JavaScript
-          で最初の投稿操作を書いてみましょう。
+          {t(
+            "サンプル投稿で試しながら、JavaScript で最初の投稿操作を書いてみましょう。",
+            "Try a sample post and write your first action in JavaScript.",
+            "用示例帖子试运行你的第一个 JavaScript 操作。",
+          )}
         </p>
       </a>
     </div>
   </section>
   <footer>
-    <a href={clientPage("licenses/index.html")}>ライセンス</a>
-    <a href={sitePage("")}>Noren</a>
+    <a href={clientPage("licenses/index.html")}>
+      {t("ライセンス", "Licenses", "许可证")}
+    </a>
+    <a href={localizedPath(locale)}>Noren</a>
     <span>AGPL-3.0</span>
-    <a href={clientPage()}>アプリを開く ↗</a>
+    <a href={clientPage()}>{t("アプリを開く", "Open app", "打开应用")} ↗</a>
   </footer>
 </Shell>
 <script>
@@ -146,7 +177,7 @@ import code from "../../../../packages/plugin-starter/action.js?raw";
   :global(body:has(.feature) main) {
     padding-block: 0;
   }
-  :global(body:has(.feature) header nav a:last-child) {
+  :global(body:has(.feature) header nav .open-app) {
     background: #f1eff2;
     padding: 6px 14px;
     border-radius: 30px;
@@ -440,7 +471,7 @@ import code from "../../../../packages/plugin-starter/action.js?raw";
   :global(body:has(.feature) header .logo) {
     color: #18533d;
   }
-  :global(body:has(.feature) header nav a:last-child) {
+  :global(body:has(.feature) header nav .open-app) {
     background: #15533c;
     color: white;
     padding: 9px 17px;

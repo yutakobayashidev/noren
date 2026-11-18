@@ -1,0 +1,12 @@
+---
+import Plugins from "../../views/Plugins.astro";
+import { locales } from "../../locales";
+export function getStaticPaths() {
+  return locales.map((locale) => ({
+    params: { locale: locale === "ja" ? undefined : locale },
+    props: { locale },
+  }));
+}
+---
+
+<Plugins locale={Astro.props.locale} />

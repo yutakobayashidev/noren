@@ -1,0 +1,112 @@
+---
+import { clientPage } from "../links";
+import { translator, type Locale } from "../locales";
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = translator(locale);
+import Shell from "../Shell.astro";
+import code from "../../../../plugins/quote-local/action.js?raw";
+import manifest from "../../../../plugins/quote-local/manifest.json";
+---
+
+<Shell
+  locale={locale}
+  page="plugins/"
+  title={t("プラグインを作る", "Build a plugin", "编写插件")}
+>
+  <h1>{t("投稿操作を作る", "Build a post action", "创建帖子操作")}</h1>
+  <p>
+    {t(
+      "最初のプラグインは、投稿を Markdown の引用に変換します。下のプレビューは本体と同じサンプルコードを使っています。",
+      "Turn a post into a Markdown quote. This preview runs the same example as the client.",
+      "把帖子转换为 Markdown 引用。下面的预览运行客户端使用的同一份示例代码。",
+    )}
+  </p>
+  <section class="panel">
+    <label for="sample">{t("サンプル投稿", "Sample post", "示例帖子")}</label>
+    <textarea id="sample">{t("今日はいい天気。", "A good day for a walk.", "今天适合散步。")}</textarea>
+    <button id="run">{t("引用を試す", "Try the action", "试运行")}</button>
+    <pre id="output" aria-live="polite"></pre>
+  </section>
+  <h2>{t("1. 雛形をコピーする", "1. Copy the example", "1. 复制示例")}</h2>
+  <p>
+    {t(
+      "リポジトリのルートで実行します。Node.js と pnpm のバージョンは",
+      "Run this at the repository root. Get the project’s Node.js and pnpm versions with",
+      "在仓库根目录运行命令。要使用项目指定的 Node.js 和 pnpm 版本，请运行",
+    )}
+    <code>nix develop</code>
+    {t("で揃います。", ".", "。")}
+  </p>
+  <pre>cp -R plugins/quote-local plugins/my-quote</pre>
+  <h2>
+    {t("2. 作者と操作を設定する", "2. Describe your action", "2. 定义操作")}
+  </h2>
+  <p>
+    {t(
+      "manifest.json の id を一意にし、作者名と日本語・英語・中国語の操作名を書きます。permissions には操作に必要な項目を列挙します。",
+      "Choose a unique manifest ID, add your author name and label the action in English, Japanese and Chinese. Declare its permissions.",
+      "设置唯一的 manifest ID、作者及英日中三种语言的操作名，并声明所需权限。",
+    )}
+  </p>
+  <pre>{JSON.stringify(manifest,null,2)}</pre>
+  <p>
+    {t(
+      "この例は post.text を要求するので、選んだ投稿の本文を読めます。元リンクを使う場合は post.url を追加します。copyText の結果を返すと、Noren がテキストの確認とコピーを担当します。",
+      "The post.text permission grants the selected post’s text. Add post.url for its original link. Return copyText to let Noren display the result for copying.",
+      "post.text 允许读取所选帖子的正文。需要原帖链接时添加 post.url。返回 copyText 后，Noren 会显示内容供用户复制。",
+    )}
+  </p>
+  <pre>{code}</pre>
+  <h2>
+    {t(
+      "3. レジストリから試す",
+      "3. Try it in the registry",
+      "3. 在插件目录中试用",
+    )}
+  </h2>
+  <pre>pnpm install
+pnpm dev</pre>
+  <p>
+    {t(
+      "設定の「プラグインを探す」から有効にし、投稿に表示される操作名を押してください。訳文などを本文の下に表示するときは inlineText を返します。",
+      "Enable the plugin in Settings → Browse plugins, then select its action on a post. Return inlineText to display a result beneath the original.",
+      "在设置的插件目录启用插件，然后点击帖子上的操作。返回 inlineText 可将结果显示在原文下方。",
+    )}
+  </p>
+  <h2>
+    {t("4. Nix で配布する", "4. Distribute with Nix", "4. 使用 Nix 分发")}
+  </h2>
+  <p>
+    {t(
+      "独立したリポジトリのルートに manifest.json と action.js を置いて配布できます。管理者は NixOS モジュールにディレクトリを指定します。",
+      "Publish manifest.json and action.js at the root of your repository. Operators can add that directory to their NixOS configuration.",
+      "在独立仓库根目录放置 manifest.json 和 action.js 即可分发。管理员可以在 NixOS 配置中指定该目录。",
+    )}
+  </p>
+  <pre>services.noren.plugins = [ ./plugins/my-quote ];</pre>
+  <p>
+    {t(
+      "インストールすると作者名と要求権限がレジストリに表示されます。操作は読者が有効にして投稿を選んだときに、隔離された Worker で実行されます。",
+      "The registry lists the author and requested permissions. The action runs in an isolated Worker when a reader enables it and selects it on a post.",
+      "目录会列出作者和所需权限。读者启用插件并在帖子上选择操作后，代码会在隔离的 Worker 中运行。",
+    )}
+  </p>
+  <a href={clientPage("#page=plugins")}>
+    {t("レジストリに戻る", "Back to registry", "返回插件目录")} →
+  </a>
+</Shell>
+<script>
+  import run from "../../../../plugins/quote-local/action.js";
+  const field = document.querySelector<HTMLTextAreaElement>("#sample")!;
+  const output = document.querySelector("#output")!;
+  function preview() {
+    output.textContent = run({
+      post: { text: field.value },
+    }).text;
+  }
+  document.querySelector("#run")!.addEventListener("click", preview);
+  preview();
+</script>

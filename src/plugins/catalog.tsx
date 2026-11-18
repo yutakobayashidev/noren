@@ -1,7 +1,7 @@
 import { postActions } from "./post-actions";
 import { useState } from "react";
 import { ArrowUpRight, Check, Plus, Search, Terminal, Workflow } from "lucide-react";
-import { t } from "../lib/i18n";
+import { language, t } from "../lib/i18n";
 import "./catalog.css";
 
 import { readingPlugins } from "./reading";
@@ -47,7 +47,10 @@ export function PluginCatalog({
     <section className="registry">
       <div className="registry-mast">
         <h1>{t("Plugin registry")}</h1>
-        <a className="registry-create" href="/site/plugins/">
+        <a
+          className="registry-create"
+          href={language === "ja" ? "/site/plugins/" : `/site/${language}/plugins/`}
+        >
           {t("Build a plugin")} ↗
         </a>
         <label className="registry-search">
