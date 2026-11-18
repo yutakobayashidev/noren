@@ -20,7 +20,6 @@ export type StoredAccount = Account & {
   profile?: string;
   relays?: string[];
   publicKey?: string;
-  feedUrl?: string;
 };
 // Native Flare AccountRepository semantics: credentials belong to one account, never to a tab.
 export class AccountStore {
@@ -50,7 +49,7 @@ export class AccountStore {
           decipher.update(data.subarray(28)),
           decipher.final(),
         ]).toString(),
-      );
+      ).filter((account: { platform: string }) => account.platform !== "rss");
     }
   }
   all() {
@@ -58,8 +57,7 @@ export class AccountStore {
   }
   public() {
     return this.values.map(
-      ({ token, session, profile, relays, publicKey, feedUrl, ...account }) =>
-        account,
+      ({ token, session, profile, relays, publicKey, ...account }) => account,
     );
   }
   get(id: string) {

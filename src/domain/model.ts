@@ -1,5 +1,4 @@
-export type Platform =
-  "twitter" | "mastodon" | "bluesky" | "misskey" | "nostr" | "rss";
+export type Platform = "twitter" | "mastodon" | "bluesky" | "misskey" | "nostr";
 export type Account = {
   id: string;
   platform: Platform;
@@ -65,7 +64,6 @@ export const platformNames: Record<Platform, string> = {
   bluesky: "Bluesky",
   misskey: "Misskey",
   nostr: "Nostr",
-  rss: "RSS",
 };
 export function postIdentity(post: SocialPost) {
   return `${post.accountId}:${post.key}`;

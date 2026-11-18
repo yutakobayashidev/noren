@@ -1,13 +1,12 @@
 import { connectionRouter } from "./connections";
 import { Router } from "express";
-import { rssFeed } from "./adapters/rss";
 import {
   misskeyFeed,
   misskeyRequest,
   mapMisskey,
   misskeyNotifications,
 } from "./adapters/misskey";
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { z } from "zod";
 import { BskyAgent } from "@atproto/api";
@@ -100,10 +99,6 @@ export function apiRouter() {
     const input = z
       .discriminatedUnion("platform", [
         z.object({
-          platform: z.literal("rss"),
-          feedUrl: z.string().url().max(2000),
-        }),
-        z.object({
           platform: z.literal("mastodon"),
           origin: z.string().max(300),
           token: z.string().min(1).max(4000),
@@ -122,20 +117,7 @@ export function apiRouter() {
       .parse(req.body);
     const store: AccountStore = res.locals.store;
     let account: StoredAccount;
-    if (input.platform === "rss") {
-      const url = new URL(input.feedUrl);
-      await publicOrigin(url.origin);
-      account = {
-        platform: "rss",
-        id: "rss:" + createHash("sha256").update(url.href).digest("hex"),
-        origin: url.origin,
-        feedUrl: url.href,
-        displayName: url.host,
-        handle: url.host,
-        canPost: false,
-      };
-      account.displayName = (await rssFeed(account)).title;
-    } else if (input.platform === "mastodon") {
+    if (input.platform === "mastodon") {
       const origin = await publicOrigin(input.origin);
       const provisional = {
         id: randomUUID(),
@@ -219,10 +201,6 @@ export function apiRouter() {
       res.json(await misskeyFeed(account, source, cursor));
       return;
     }
-    if (account.platform === "rss") {
-      res.json((await rssFeed(account, source)).page);
-      return;
-    }
     const page =
       account.platform === "twitter"
         ? await twitterFeed(account, source, cursor)
@@ -238,7 +216,7 @@ export function apiRouter() {
       res.json({ notifications: await misskeyNotifications(account) });
       return;
     }
-    if (account.platform === "twitter" || account.platform === "rss") {
+    if (account.platform === "twitter") {
       res.json({ notifications: [], unsupported: true });
       return;
     }
@@ -254,14 +232,6 @@ export function apiRouter() {
     const store: AccountStore = res.locals.store;
     const account =
       input.accountId === "guest" ? guest : store.get(input.accountId);
-    if (account.platform === "rss") {
-      res.json({
-        posts: (await rssFeed(account)).page.posts.filter(
-          (p) => p.nativeId === input.nativeId,
-        ),
-      });
-      return;
-    }
     if (account.platform === "misskey") {
       const params = { noteId: input.nativeId };
       const [ancestors, note, replies] = await Promise.all(
@@ -471,8 +441,6 @@ export function apiRouter() {
       res.json({
         lists: data.lists.map((l) => ({ id: l.uri, title: l.name })),
       });
-    } else if (account.platform === "rss") {
-      res.json({ lists: [] });
     } else if (account.platform === "misskey") {
       const { data } = await misskeyRequest(account, "users/lists/list");
       res.json({ lists: data.map((l: any) => ({ id: l.id, title: l.name })) });

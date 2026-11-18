@@ -136,32 +136,28 @@ export function AccountsDialog({
               </div>
             ))}
             <div className="grid gap-2">
-              {(
-                ["mastodon", "bluesky", "twitter", "misskey", "rss"] as const
-              ).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => {
-                    setError("");
-                    setPlatform(p);
-                  }}
-                  className="flex items-center gap-3 rounded-2xl bg-muted px-4 py-4 text-left hover:bg-accent"
-                >
-                  <PlatformIcon platform={p} size={24} />
-                  <span className="flex-1 font-medium">{platformNames[p]}</span>
-                  <Plus size={18} />
-                </button>
-              ))}
+              {(["mastodon", "bluesky", "twitter", "misskey"] as const).map(
+                (p) => (
+                  <button
+                    key={p}
+                    onClick={() => {
+                      setError("");
+                      setPlatform(p);
+                    }}
+                    className="flex items-center gap-3 rounded-2xl bg-muted px-4 py-4 text-left hover:bg-accent"
+                  >
+                    <PlatformIcon platform={p} size={24} />
+                    <span className="flex-1 font-medium">
+                      {platformNames[p]}
+                    </span>
+                    <Plus size={18} />
+                  </button>
+                ),
+              )}
             </div>
           </div>
         ) : (
           <form onSubmit={connect} className="mt-6 space-y-4">
-            {platform === "rss" && (
-              <label>
-                RSS or Atom feed URL
-                <input type="url" name="feedUrl" required />
-              </label>
-            )}
             {platform === "misskey" && (
               <label>
                 Misskey server
