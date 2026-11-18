@@ -1,3 +1,4 @@
+import { webMcpSearch } from "./plugins/webmcp";
 import { t, preference, changeLanguage } from "./lib/i18n";
 import { useEffect, useState } from "react";
 import {
@@ -133,6 +134,10 @@ export function App() {
 }
 function Workspace({ session }: { session: Session }) {
   const storageKey = `flare:${encodeURIComponent(session.user!.issuer)}:${encodeURIComponent(session.user!.sub)}`;
+  const [webMcpEnabled, setWebMcpEnabled] = useStored(
+    storageKey + ":webmcp",
+    false,
+  );
   const [route, setRoute] = useState(readRoute);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [guest, setGuest] = useState<Account | null>(null);
@@ -465,13 +470,30 @@ function Workspace({ session }: { session: Session }) {
         {route.page === "discover" && (
           <form
             className="search-box"
+            {...(webMcpEnabled ? webMcpSearch : {})}
             onSubmit={(e) => {
               e.preventDefault();
-              navigate({ query: searchText });
+              const query = String(
+                new FormData(e.currentTarget).get("query") ?? "",
+              ).trim();
+              if (!query) return;
+              setSearchText(query);
+              navigate({ query });
+              const submission = e.nativeEvent as SubmitEvent & {
+                respondWith?: (result: Promise<string>) => void;
+                agentInvoked?: boolean;
+              };
+              if (submission.agentInvoked)
+                submission.respondWith?.(
+                  Promise.resolve("Opened search results for " + query),
+                );
             }}
           >
             <Search size={22} />
             <input
+              name="query"
+              required
+              maxLength={1000}
               aria-label={t("Search posts")}
               placeholder={t("Search your social world")}
               value={searchText}
@@ -612,6 +634,17 @@ function Workspace({ session }: { session: Session }) {
             {t("Make Flare feel like home.")}
           </DialogDescription>
           <div className="mt-6 space-y-6">
+            <section>
+              <h2 className="settings-label">{t("Plugins")}</h2>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={webMcpEnabled}
+                  onChange={(event) => setWebMcpEnabled(event.target.checked)}
+                />
+                {t("WebMCP search in Discover")}
+              </label>
+            </section>
             <section>
               <label>
                 {t("Language")}

@@ -65,3 +65,10 @@ export default function run({ post }) {
 一つの下書きを複数の SNS に出す直前、送信先の数だけプレビューを並べる。例えば Mastodon にだけ内容注意を付け、Bluesky は文字数に収まるよう末尾を短くし、Nostr は原文のままにする。変更した箇所と送信先を本体の確認画面に戻し、送信の判断は利用者が行う。最初の試作は本文の個別編集と差分表示。各 SNS に固有の項目は本体側の投稿対応に合わせて追加する。
 
 遠征タブにはタイムライン、続報には投稿メニュー、楽屋には投稿画面という異なる拡張箇所が必要になる。最初に続報の最小版を作れば、投稿操作の設計を実際の利用で評価できる。他の二案はその結果を見てから拡張 API に反映する。
+
+## Twitter 周辺のツールから考える候補
+
+- **別の SNS で開く**。プロフィールに著者自身が載せている別アカウントを候補にし、Flare 内で移動する。FediFinder が Twitter のフォロー先のプロフィールから Fediverse のアドレスを探す発想を、一人ずつ読む操作に応用する。[FediFinder](https://github.com/lucahammer/fedifinder)
+- **このタブの読み方**。Control Panel for Twitter のタイムライン調整をヒントに、タブごとに「本人の投稿」「人から回ってきた投稿」を切り替える。後者を選ぶと、誰の紹介で見つけたかを投稿の上に表示する。[Control Panel for Twitter](https://github.com/insin/control-panel-for-twitter)
+
+WebMCP は同梱の任意プラグインとして検索フォームに接続する。設定で有効にし、Discover を開いたときだけ、対応ブラウザが flare_search_posts を発見できる。検索の送信先と結果表示は手動操作と共通。[WebMCP](https://developer.chrome.com/docs/modern-web-guidance/guides/webmcp/webmcp)
