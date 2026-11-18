@@ -1,3 +1,4 @@
+import { blueskyMetadata } from "./bluesky-oauth";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadEnvFile } from "node:process";
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
   next();
 });
+app.get("/bluesky-client.json", (_req, res) => res.json(blueskyMetadata()));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 app.use(express.json({ limit: "64kb" }));
 app.use(auth.sameOrigin);

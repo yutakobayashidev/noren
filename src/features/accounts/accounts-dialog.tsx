@@ -26,6 +26,7 @@ export function AccountsDialog({
   onChange: () => void;
 }) {
   const [platform, setPlatform] = useState<Platform | null>(null);
+  const [blueskyMethod, setBlueskyMethod] = useState("oauth");
   const [mastodonMethod, setMastodonMethod] = useState("oauth");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,6 +34,7 @@ export function AccountsDialog({
   const [loadingProfiles, setLoadingProfiles] = useState(false);
   useEffect(() => {
     if (open) {
+      setBlueskyMethod("oauth");
       setMastodonMethod("oauth");
       setPlatform(null);
       setError("");
@@ -63,6 +65,7 @@ export function AccountsDialog({
     const values = Object.fromEntries(new FormData(event.currentTarget));
     try {
       if (
+        (platform === "bluesky" && blueskyMethod === "oauth") ||
         platform === "misskey" ||
         (platform === "mastodon" && mastodonMethod === "oauth")
       ) {
@@ -215,31 +218,47 @@ export function AccountsDialog({
                   />
                 </label>
                 <label>
-                  {t("App password")}
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    autoComplete="off"
-                    placeholder="xxxx-xxxx-xxxx-xxxx"
-                  />
+                  {t("Sign-in method")}
+                  <select
+                    value={blueskyMethod}
+                    onChange={(e) => setBlueskyMethod(e.target.value)}
+                  >
+                    <option value="oauth">
+                      {t("Authorize on server (recommended)")}
+                    </option>
+                    <option value="password">{t("App password")}</option>
+                  </select>
                 </label>
-                <details className="text-sm">
-                  <summary>{t("Advanced")}</summary>
-                  <label className="mt-3">
-                    {t("Server")}
-                    <input
-                      name="origin"
-                      defaultValue="https://bsky.social"
-                      required
-                    />
-                  </label>
-                </details>
-                <p className="text-xs text-muted-foreground">
-                  {t(
-                    "Use an app password from Bluesky Settings → Privacy and security → App passwords.",
-                  )}
-                </p>
+                {blueskyMethod === "password" && (
+                  <>
+                    <label>
+                      {t("App password")}
+                      <input
+                        name="password"
+                        type="password"
+                        required
+                        autoComplete="off"
+                        placeholder="xxxx-xxxx-xxxx-xxxx"
+                      />
+                    </label>
+                    <details className="text-sm">
+                      <summary>{t("Advanced")}</summary>
+                      <label className="mt-3">
+                        {t("Server")}
+                        <input
+                          name="origin"
+                          defaultValue="https://bsky.social"
+                          required
+                        />
+                      </label>
+                    </details>
+                    <p className="text-xs text-muted-foreground">
+                      {t(
+                        "Use an app password from Bluesky Settings → Privacy and security → App passwords.",
+                      )}
+                    </p>
+                  </>
+                )}
               </>
             )}
             {platform === "twitter" && (

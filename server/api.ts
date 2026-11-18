@@ -1,3 +1,4 @@
+import { blueskyConnectionRouter } from "./bluesky-oauth";
 import {
   nostrRouter,
   nostrFeed,
@@ -19,7 +20,7 @@ import { z } from "zod";
 import { BskyAgent } from "@atproto/api";
 import { AccountStore, type StoredAccount } from "./store";
 import { identityKey } from "./auth";
-import { publicOrigin } from "./http";
+import { publicOrigin, publicFetch } from "./http";
 import {
   mastodonFeed,
   mastodonRequest,
@@ -96,6 +97,7 @@ export function apiRouter() {
     next();
   });
   router.use("/nostr", nostrRouter());
+  router.use("/connect/bluesky", blueskyConnectionRouter());
   router.use("/connect", connectionRouter());
   router.get("/accounts", (_req, res) =>
     res.json({ accounts: res.locals.store.public(), guest }),
@@ -149,7 +151,7 @@ export function apiRouter() {
       };
     } else if (input.platform === "bluesky") {
       const origin = await publicOrigin(input.origin);
-      const agent = new BskyAgent({ service: origin });
+      const agent = new BskyAgent({ service: origin, fetch: publicFetch });
       const { data } = await agent.login({
         identifier: input.identifier,
         password: input.password,
@@ -354,7 +356,7 @@ export function apiRouter() {
         res.json({ uri: result.uri });
       } else {
         const uri = input.action === "unlike" ? input.likeUri : input.repostUri;
-        if (!uri || !uri.startsWith(`at://${agent.session!.did}/`))
+        if (!uri || !uri.startsWith(`at://${agent.assertDid}/`))
           throw new Error("Refresh the timeline before undoing this action.");
         if (input.action === "unlike") await agent.deleteLike(uri);
         else await agent.deleteRepost(uri);
@@ -467,7 +469,7 @@ export function apiRouter() {
     } else if (account.platform === "bluesky") {
       const agent = await blueskyAgent(account, store);
       const { data } = await agent.app.bsky.graph.getLists({
-        actor: agent.session!.did,
+        actor: agent.assertDid,
         limit: 100,
       });
       res.json({

@@ -1,4 +1,5 @@
-import { BskyAgent, RichText, type AtpSessionData } from "@atproto/api";
+import { blueskyOAuth } from "../bluesky-oauth";
+import { Agent, BskyAgent, RichText, type AtpSessionData } from "@atproto/api";
 import type { StoredAccount, AccountStore } from "../store";
 import type {
   SocialPost,
@@ -71,6 +72,10 @@ export async function blueskyAgent(
   account: StoredAccount,
   store: AccountStore,
 ) {
+  if (account.oauthSession)
+    return new Agent(
+      await blueskyOAuth(store).restore(account.id.slice("bluesky:".length)),
+    );
   let agents = stores.get(store);
   if (!agents) {
     agents = new Map();

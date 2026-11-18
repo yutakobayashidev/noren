@@ -21,3 +21,5 @@ Flare Web は内部 URL `http://twitter-browser:3000` で Relay に接続しま�
 Relay の `account1` は、この Flare Web インスタンスにログインできる利用者が共有します。個人用途では `OIDC_ALLOWED_SUBJECTS` で自分の OIDC subject に制限してください。
 
 設定の元となる公式例: [Twitter Safe Relay Docker](https://github.com/fa0311/twitter_api_safe_relay/tree/438bcc0cce49905cef1199b92ab71aee7e65433b/docker)。
+
+Bluesky の「サーバーで認可」は AT Protocol の OAuth を使います。本番では公開 HTTPS の `APP_ORIGIN` から `/bluesky-client.json` を取得できるようにします。ローカルで認可を試す場合は `APP_ORIGIN=http://127.0.0.1:3101` とし、同じ IP アドレスから開きます。OIDC のリダイレクト URI もこの origin に合わせます。既存のアプリパスワードはログイン方法の選択欄から利用できます。

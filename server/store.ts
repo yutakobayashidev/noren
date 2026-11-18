@@ -17,6 +17,7 @@ import type { Account } from "../src/domain/model";
 export type StoredAccount = Account & {
   token?: string;
   session?: unknown;
+  oauthSession?: unknown;
   profile?: string;
   relays?: string[];
   publicKey?: string;
@@ -57,7 +58,15 @@ export class AccountStore {
   }
   public() {
     return this.values.map(
-      ({ token, session, profile, relays, publicKey, ...account }) => account,
+      ({
+        token,
+        session,
+        oauthSession,
+        profile,
+        relays,
+        publicKey,
+        ...account
+      }) => account,
     );
   }
   get(id: string) {
