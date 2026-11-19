@@ -29,7 +29,7 @@ import {
   AlignLeft,
 } from "lucide-react";
 import type { Account, SocialPost, Tab, FeedSource } from "./domain/model";
-import { postIdentity, platformNames } from "./domain/model";
+import { postIdentity, platformNames, supportsRecommended } from "./domain/model";
 import { api, errorMessage } from "./lib/api";
 import { useStored } from "./lib/storage";
 import { Button } from "./components/ui/button";
@@ -41,6 +41,7 @@ import { Timeline, type PostInteractions } from "./features/timeline/timeline";
 import { PostCard } from "./features/timeline/post-card";
 import { ThreadDialog } from "./features/timeline/thread-dialog";
 import { Notifications } from "./features/timeline/notifications";
+import { useTabSwipe } from "./features/timeline/use-tab-swipe";
 import { TabDialog } from "./features/timeline/tab-dialog";
 
 type Session = {
@@ -140,6 +141,10 @@ function Workspace({ session }: { session: Session }) {
   const [refresh, setRefresh] = useState(0);
   const [searchText, setSearchText] = useState(route.query);
   const [tabs, setTabs] = useStored<Tab[]>(`${storageKey}:tabs`, []);
+  const [homeFeeds, setHomeFeeds] = useStored<Record<string, "latest" | "recommended">>(
+    `${storageKey}:home-feeds`,
+    {},
+  );
   const [watches, setWatches] = useStored<Watch[]>(storageKey + ":follow-ups", []);
   const [notes, setNotes] = useStored<Record<string, string>>(storageKey + ":notes", {});
   const [noteQuery, setNoteQuery] = useState("");
@@ -219,6 +224,24 @@ function Workspace({ session }: { session: Session }) {
   };
   const available = accounts.length ? accounts : guest ? [guest] : [];
   const activeTabs = tabs.filter((tab) => !tab.expiresAt || actions.includes("flare.event-tabs"));
+  const showTimelineTabs = route.page === "home" || route.page === "discover";
+  const timelineTabs = [
+    { id: "mixed", label: t("Mixed"), icon: <PlatformIcon platform="mixed" /> },
+    ...accounts.map((account) => ({
+      id: account.id,
+      label:
+        accounts.filter((a) => a.platform === account.platform).length > 1
+          ? account.displayName
+          : platformNames[account.platform],
+      icon: <PlatformIcon platform={account.platform} />,
+    })),
+    ...activeTabs.map((tab) => ({ id: tab.id, label: tab.title, icon: <List size={16} /> })),
+  ];
+  const swipe = useTabSwipe((offset) => {
+    const index = timelineTabs.findIndex((tab) => tab.id === route.tab);
+    const next = timelineTabs[index + offset];
+    if (index >= 0 && next) navigate({ tab: next.id });
+  });
   useEffect(() => {
     const deadlines = tabs.flatMap((tab) => (tab.expiresAt ? [tab.expiresAt] : []));
     if (!deadlines.length) return;
@@ -243,12 +266,17 @@ function Workspace({ session }: { session: Session }) {
     selected = available.filter((a) => Object.hasOwn(custom.sources!, a.id));
   if (route.page === "profile")
     selected = available.filter((account) => account.id === route.account);
+  const rankedAccount =
+    route.page === "home" && !custom
+      ? accounts.find((a) => a.id === route.tab && supportsRecommended(a.platform))
+      : undefined;
+  const homeFeed = rankedAccount ? (homeFeeds[rankedAccount.id] ?? "latest") : "latest";
   const source: FeedSource =
     route.page === "discover"
       ? { kind: "search", query: route.query }
       : route.page === "profile"
         ? { kind: "user", target: route.profile }
-        : (custom?.source ?? { kind: "home" });
+        : (custom?.source ?? { kind: homeFeed === "recommended" ? "recommended" : "home" });
   const title =
     route.page === "plugins"
       ? t("Browse plugins")
@@ -408,39 +436,18 @@ function Workspace({ session }: { session: Session }) {
                   </Button>
                 </div>
               )}
-              {["home", "discover"].includes(route.page) && (
+              {showTimelineTabs && (
                 <div className="timeline-toolbar">
                   <div className="timeline-tabs" role="tablist" aria-label={t("Timelines")}>
-                    <button
-                      role="tab"
-                      aria-selected={route.tab === "mixed"}
-                      onClick={() => navigate({ tab: "mixed" })}
-                    >
-                      <PlatformIcon platform="mixed" />
-                      {t("Mixed")}
-                    </button>
-                    {accounts.map((account) => (
-                      <button
-                        role="tab"
-                        key={account.id}
-                        aria-selected={route.tab === account.id}
-                        onClick={() => navigate({ tab: account.id })}
-                      >
-                        <PlatformIcon platform={account.platform} />
-                        {accounts.filter((a) => a.platform === account.platform).length > 1
-                          ? account.displayName
-                          : platformNames[account.platform]}
-                      </button>
-                    ))}
-                    {activeTabs.map((tab) => (
+                    {timelineTabs.map((tab) => (
                       <button
                         role="tab"
                         key={tab.id}
                         aria-selected={route.tab === tab.id}
                         onClick={() => navigate({ tab: tab.id })}
                       >
-                        <List size={16} />
-                        {tab.title}
+                        {tab.icon}
+                        {tab.label}
                       </button>
                     ))}
                     <button
@@ -469,6 +476,24 @@ function Workspace({ session }: { session: Session }) {
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+              {rankedAccount && (
+                <div className="feed-switch" role="group" aria-label={t("Home timeline")}>
+                  {(
+                    [
+                      { id: "latest", label: t("Latest") },
+                      { id: "recommended", label: t("Recommended") },
+                    ] as const
+                  ).map(({ id, label }) => (
+                    <button
+                      key={id}
+                      aria-pressed={homeFeed === id}
+                      onClick={() => setHomeFeeds((old) => ({ ...old, [rankedAccount.id]: id }))}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               )}
               {route.page === "discover" && (
@@ -507,7 +532,10 @@ function Workspace({ session }: { session: Session }) {
                 </form>
               )}
               <div
-                className="feed-scroll"
+                className={
+                  showTimelineTabs ? "feed-scroll touch-pan-y touch-pinch-zoom" : "feed-scroll"
+                }
+                {...(showTimelineTabs && swipe)}
                 key={route.page + route.tab + route.query + route.profile}
               >
                 {route.page === "profile" && actions.includes("flare.profile-links") && (
@@ -592,6 +620,7 @@ function Workspace({ session }: { session: Session }) {
                   </div>
                 ) : (
                   <Timeline
+                    pullEnabled={showTimelineTabs}
                     sources={route.page === "home" ? custom?.sources : undefined}
                     preferencesKey={storageKey + ":feed-filter:" + route.page + ":" + route.tab}
                     accounts={selected}
