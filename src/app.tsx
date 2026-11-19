@@ -1,11 +1,12 @@
 import { ProfileLinks } from "./plugins/profile-links";
 import { Watches, FollowUps, type Watch } from "./plugins/follow-ups";
 import { Notes } from "./plugins/post-reading-tools";
-import { EnabledActions } from "./plugins/post-actions";
+import { EnabledActions, postActions } from "./plugins/post-actions";
+import { AutoTranslate, type AutoTranslateSettings } from "./plugins/plamo/auto";
 import { PluginCatalog } from "./plugins/catalog";
 import { webMcpSearch } from "./plugins/webmcp";
-import { t, preference, changeLanguage } from "./lib/i18n";
-import { useEffect, useState } from "react";
+import { t, preference, changeLanguage, language } from "./lib/i18n";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Home,
   Bell,
@@ -123,10 +124,32 @@ export function App() {
     );
   return <Workspace key={`${session.user?.issuer}:${session.user?.sub}`} session={session} />;
 }
+function PluginContexts({
+  actions,
+  autoTranslate,
+  children,
+}: {
+  actions: string[];
+  autoTranslate?: AutoTranslateSettings;
+  children: ReactNode;
+}) {
+  return (
+    <EnabledActions.Provider value={actions}>
+      <AutoTranslate.Provider value={autoTranslate}>{children}</AutoTranslate.Provider>
+    </EnabledActions.Provider>
+  );
+}
 function Workspace({ session }: { session: Session }) {
   const storageKey = `flare:${encodeURIComponent(session.user!.issuer)}:${encodeURIComponent(session.user!.sub)}`;
   const [webMcpEnabled, setWebMcpEnabled] = useStored(storageKey + ":webmcp", false);
   const [actions, setActions] = useStored<string[]>(storageKey + ":post-actions", []);
+  const [autoTranslate, setAutoTranslate] = useStored<AutoTranslateSettings>(
+    storageKey + ":plamo-auto",
+    { enabled: false, language },
+  );
+  const plamoGrant = postActions.find((action) => action.id === "flare.plamo")?.grant;
+  const autoTranslateContext =
+    plamoGrant && actions.includes(plamoGrant) ? autoTranslate : undefined;
   const [route, setRoute] = useState(readRoute);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [guest, setGuest] = useState<Account | null>(null);
@@ -300,7 +323,7 @@ function Workspace({ session }: { session: Session }) {
       <Notes.Provider
         value={{ notes, change: (key, value) => setNotes((old) => ({ ...old, [key]: value })) }}
       >
-        <EnabledActions.Provider value={actions}>
+        <PluginContexts actions={actions} autoTranslate={autoTranslateContext}>
           <div className="app-shell">
             <aside className="navigation-rail" aria-label={t("Main navigation")}>
               <button
@@ -550,6 +573,8 @@ function Workspace({ session }: { session: Session }) {
                   <PluginCatalog
                     actions={actions}
                     onActions={setActions}
+                    autoTranslate={autoTranslate}
+                    onAutoTranslate={setAutoTranslate}
                     enabled={webMcpEnabled}
                     onEnable={setWebMcpEnabled}
                   />
@@ -800,7 +825,7 @@ function Workspace({ session }: { session: Session }) {
               </DialogContent>
             </Dialog>
           </div>
-        </EnabledActions.Provider>
+        </PluginContexts>
       </Notes.Provider>
     </Watches.Provider>
   );

@@ -274,5 +274,27 @@
   "Include this source": ["このアカウントの取得条件を追加", "添加此账号的信息源"],
   "Linked profiles": ["別の SNS で開く", "关联的社交账号"],
   "Import verified GGUF": ["取得済みの GGUF を読み込む", "导入已有的 GGUF 文件"],
-  "Model ready": ["モデルを使用できます", "模型已就绪"]
+  "Model ready": ["モデルを使用できます", "模型已就绪"],
+  "Automatic translation": ["自動翻訳", "自动翻译"],
+  "Translate posts in other languages as they appear": [
+    "表示された外国語の投稿を自動で翻訳する",
+    "自动翻译显示的外语帖子"
+  ],
+  "Translate into": ["翻訳先の言語", "翻译成"],
+  "Enable the plugin to change these settings.": [
+    "プラグインを有効にすると設定を変更できます。",
+    "启用插件后即可更改这些设置。"
+  ],
+  "On this device": ["この端末に保存済み", "已保存在此设备"],
+  "Not downloaded": ["未取得", "未下载"],
+  "Automatic translation starts after you download the model. Nothing is downloaded or translated before then.": [
+    "自動翻訳はモデルを取得した後に始まります。それまではモデルの取得も翻訳も行いません。",
+    "下载模型后才会开始自动翻译。在此之前不会下载或翻译任何内容。"
+  ],
+  "Download model": ["モデルを取得", "下载模型"],
+  "Original post": ["原文", "原文"],
+  "Translated on this device by PLaMo": ["PLaMo でこの端末上で翻訳", "已由 PLaMo 在此设备上翻译"],
+  "Show translation": ["訳文を表示", "显示译文"],
+  "Show original": ["原文を表示", "显示原文"],
+  "Cancel": ["キャンセル", "取消"]
 }

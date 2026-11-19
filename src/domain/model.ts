@@ -16,6 +16,8 @@ export type SocialPost = {
   accountId: string;
   url: string;
   text: string;
+  /** Language declared by the network, such as Mastodon `language` or Bluesky `langs`. */
+  language?: string;
   html?: string;
   createdAt?: string;
   author: { name: string; handle: string; avatarUrl?: string };

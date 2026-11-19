@@ -21,6 +21,7 @@ export function mapBluesky(post: any, account: StoredAccount, reason?: any): Soc
     platform: "bluesky",
     url: `https://bsky.app/profile/${encodeURIComponent(post.author.handle)}/post/${encodeURIComponent(post.uri.split("/").pop())}`,
     text: post.record?.text ?? post.value?.text ?? "",
+    language: [post.record?.langs ?? post.value?.langs].flat().find((l) => typeof l === "string"),
     author: {
       name: post.author.displayName || post.author.handle,
       handle: post.author.handle,

@@ -47,6 +47,7 @@ export function mapMastodon(raw: any, account: StoredAccount): SocialPost {
       allowedTags: [],
       allowedAttributes: {},
     }),
+    language: typeof post.language === "string" ? post.language : undefined,
     createdAt: post.created_at,
     sensitive: post.sensitive,
     contentWarning: post.spoiler_text,

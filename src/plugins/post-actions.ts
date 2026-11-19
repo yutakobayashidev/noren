@@ -3,7 +3,7 @@ import { language } from "../lib/i18n";
 import { runIsolated, type ActionResult } from "./sandbox";
 import { manifestV2 } from "./manifests";
 
-type Input = { post: { text: string; url: string } };
+type Input = { post: { text: string; url: string }; language?: string };
 type Run = (input: Input) => ActionResult;
 type PostAction = {
   id: string;
@@ -45,7 +45,11 @@ export const postActions: PostAction[] = [
       name: m.name[language],
       permissions: m.permissions,
       author: m.author,
-      async run({ post }: Input, signal: AbortSignal, progress?: (bytes: number) => void) {
+      async run(
+        { post, language: target = language }: Input,
+        signal: AbortSignal,
+        progress?: (bytes: number) => void,
+      ) {
         const input = {
           post: Object.fromEntries(
             m.permissions
@@ -55,7 +59,7 @@ export const postActions: PostAction[] = [
                 return [key, post[key]];
               }),
           ),
-          language,
+          language: target,
         };
         const result = await runIsolated(await load(), input, signal);
         if (result.kind !== "translate") return result;
@@ -68,7 +72,7 @@ export const postActions: PostAction[] = [
         const { translate } = await import("./plamo/client");
         return {
           kind: "inlineText" as const,
-          text: await translate(post.text, language, signal, progress),
+          text: await translate(post.text, target, signal, progress),
         };
       },
     };

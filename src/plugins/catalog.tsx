@@ -1,5 +1,7 @@
 import { postActions } from "./post-actions";
 import { useState } from "react";
+import type { AutoTranslateSettings } from "./plamo/auto";
+import { PlamoSettings } from "./plamo/settings";
 import { ArrowUpRight, Check, Plus, Search, Terminal, Workflow } from "lucide-react";
 import { language, t } from "../lib/i18n";
 import "./catalog.css";
@@ -23,13 +25,16 @@ export function PluginCatalog({
   onEnable,
   actions,
   onActions,
+  autoTranslate,
+  onAutoTranslate,
 }: {
+  autoTranslate: AutoTranslateSettings;
+  onAutoTranslate: (value: AutoTranslateSettings) => void;
   actions: string[];
   onActions: (ids: string[]) => void;
   enabled: boolean;
   onEnable: (value: boolean) => void;
 }) {
-  const [modelStatus, setModelStatus] = useState("");
   const [query, setQuery] = useState("");
   const [activeOnly, setActiveOnly] = useState(false);
   const matches =
@@ -131,48 +136,11 @@ export function PluginCatalog({
               </p>
             )}
             {a.id === "flare.plamo" && (
-              <>
-                <p>{t("Built with PLaMo. Translate on this device using WebGPU.")}</p>
-                <a href="/runtime/sakutto-1.7.3/licenses/PLaMo-Community-License-en.txt">
-                  {t("Model license")}
-                </a>{" "}
-                ·{" "}
-                <button
-                  onClick={async () => {
-                    try {
-                      const { removeModel } = await import("./plamo/client");
-                      await removeModel();
-                      setModelStatus(t("Model removed"));
-                    } catch {
-                      setModelStatus(t("Could not remove model"));
-                    }
-                  }}
-                >
-                  {t("Remove downloaded model")}
-                </button>
-                <label>
-                  {t("Import verified GGUF")}
-                  <input
-                    type="file"
-                    accept=".gguf"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      e.target.value = "";
-                      if (!file) return;
-                      try {
-                        const { importModel } = await import("./plamo/download");
-                        await importModel(file);
-                        setModelStatus(t("Model ready"));
-                      } catch (error) {
-                        setModelStatus(
-                          t(error instanceof Error ? error.message : "Model verification failed"),
-                        );
-                      }
-                    }}
-                  />
-                </label>
-                <span role="status">{modelStatus}</span>
-              </>
+              <PlamoSettings
+                enabled={actions.includes(a.grant)}
+                settings={autoTranslate}
+                onSettings={onAutoTranslate}
+              />
             )}
             <p>
               {t("Developer")} · {a.author}

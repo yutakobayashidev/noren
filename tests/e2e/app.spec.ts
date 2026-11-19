@@ -176,6 +176,35 @@ test("PLaMo checks device support before any model download", async ({ page }) =
   expect(downloads).toEqual([]);
 });
 
+test("PLaMo auto translation waits for the reader to download the model", async ({ page }) => {
+  const downloads: string[] = [];
+  await page.route("https://huggingface.co/**", (route) => {
+    downloads.push(route.request().url());
+    return route.abort();
+  });
+  await fixture(page);
+  await page.goto("/#page=plugins");
+  const plugin = page
+    .locator("article")
+    .filter({ has: page.getByRole("heading", { name: "Translate with PLaMo" }) });
+  const automatic = plugin.getByRole("checkbox", {
+    name: "Translate posts in other languages as they appear",
+  });
+  await expect(automatic).toBeDisabled();
+  await plugin.getByRole("button", { name: "Enable plugin" }).click();
+  await automatic.check();
+  await plugin.getByRole("combobox", { name: "Translate into" }).selectOption("ja");
+  await expect(plugin.getByRole("button", { name: "Download model (573 MB)" })).toBeVisible();
+  await page.reload();
+  await expect(automatic).toBeChecked();
+  await expect(plugin.getByRole("combobox", { name: "Translate into" })).toHaveValue("ja");
+  await page.goto("/");
+  await expect(page.getByText(post.text)).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.getByRole("button", { name: "Show original" })).toHaveCount(0);
+  expect(downloads).toEqual([]);
+});
+
 async function enablePlugins(page: Page, titles: string[]) {
   await page.goto("/#page=plugins");
   for (const name of titles) {
