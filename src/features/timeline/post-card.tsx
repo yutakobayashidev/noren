@@ -2,8 +2,8 @@ import { PostReadingTools } from "../../plugins/post-reading-tools";
 import { postActions, EnabledActions } from "../../plugins/post-actions";
 import { t } from "../../lib/i18n";
 import { useState, useContext, useEffect, useRef } from "react";
-import { Heart, Repeat2, MessageCircle, Bookmark, ExternalLink, LoaderCircle } from "lucide-react";
-import type { SocialPost } from "../../domain/model";
+import { Heart, Repeat2, MessageCircle, Bookmark, ExternalLink } from "lucide-react";
+import { applyReaction, type ReactionKind, type SocialPost } from "../../domain/model";
 import { PlatformIcon, Avatar } from "../../components/platform";
 import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
@@ -80,42 +80,60 @@ export function PostCard({
     setPluginResult("");
     return () => job.current?.abort();
   }, [enabledActions, post.key, post.accountId, post.text]);
-  const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [revealed, setRevealed] = useState(false);
   const [media, setMedia] = useState<string | null>(null);
   const concealed = (post.sensitive || post.contentWarning) && !revealed;
-  async function action(kind: "like" | "repost") {
-    const active = kind === "like" ? post.liked : post.reposted;
-    setBusy(kind);
-    setError("");
+  // Optimistic target state per reaction while its request is in flight.
+  const [pending, setPending] = useState<Partial<Record<ReactionKind, boolean>>>({});
+  const inflight = useRef(new Set<ReactionKind>());
+  const [failed, setFailed] = useState<{
+    kind: ReactionKind;
+    active: boolean;
+    message: string;
+  } | null>(null);
+  const latest = useRef(post);
+  latest.current = post;
+  let shown = post;
+  for (const kind of ["like", "repost"] as const)
+    if (pending[kind] !== undefined) shown = applyReaction(shown, kind, pending[kind]);
+  const reactionsDisabled =
+    post.platform === "nostr" || post.readOnly || post.accountId === "guest";
+  async function react(kind: ReactionKind, active: boolean) {
+    // One request per reaction kind: repeated presses while it is in flight are ignored.
+    if (inflight.current.has(kind)) return;
+    inflight.current.add(kind);
+    setPending((old) => ({ ...old, [kind]: active }));
+    setFailed((old) => (old?.kind === kind ? null : old));
     try {
       const result = await api<{ post?: SocialPost; uri?: string }>("/api/action", {
-        ...post,
-        action: active ? `un${kind}` : kind,
+        ...latest.current,
+        action: active ? kind : `un${kind}`,
       });
-      onUpdate(
-        result.post ?? {
-          ...post,
-          ...(kind === "like"
-            ? {
-                liked: !active,
-                likes: Math.max(0, (post.likes || 0) + (active ? -1 : 1)),
-                likeUri: result.uri,
-              }
-            : {
-                reposted: !active,
-                reposts: Math.max(0, (post.reposts || 0) + (active ? -1 : 1)),
-                repostUri: result.uri,
-              }),
-        },
-      );
+      onUpdate(result.post ?? applyReaction(latest.current, kind, active, result.uri));
     } catch (e) {
-      setError(errorMessage(e));
+      setFailed({ kind, active, message: errorMessage(e) });
     } finally {
-      setBusy("");
+      inflight.current.delete(kind);
+      setPending((old) => {
+        const next = { ...old };
+        delete next[kind];
+        return next;
+      });
     }
   }
+  function toggle(kind: ReactionKind) {
+    if (inflight.current.has(kind)) return;
+    void react(kind, !(kind === "like" ? shown.liked : shown.reposted));
+  }
+  const failureLabel = failed
+    ? t(
+        {
+          like: ["Could not like the post.", "Could not remove the like."],
+          repost: ["Could not repost.", "Could not undo the repost."],
+        }[failed.kind][failed.active ? 0 : 1],
+      )
+    : "";
   return (
     <article className={`post-card ${compact ? "compact" : ""}`}>
       {post.boostedBy && (
@@ -224,42 +242,46 @@ export function PostCard({
               {error}
             </p>
           )}
+          {failed && (
+            <div role="alert" className="error-message mt-3 flex flex-wrap items-center gap-2">
+              <span>
+                {failureLabel} {failed.message}
+              </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => void react(failed.kind, failed.active)}
+              >
+                {t("Retry")}
+              </Button>
+            </div>
+          )}
           <div className="post-actions">
             <button onClick={() => onThread(post)} aria-label={t("Open conversation")}>
               <MessageCircle size={17} />
               <span>{post.replies || ""}</span>
             </button>
             <button
-              onClick={() => action("repost")}
-              aria-label={post.reposted ? t("Undo repost") : t("Repost")}
-              aria-pressed={!!post.reposted}
-              disabled={
-                post.platform === "nostr" || !!busy || post.readOnly || post.accountId === "guest"
-              }
-              className={post.reposted ? "reposted" : ""}
+              onClick={() => toggle("repost")}
+              aria-label={shown.reposted ? t("Undo repost") : t("Repost")}
+              aria-pressed={!!shown.reposted}
+              aria-busy={pending.repost !== undefined}
+              disabled={reactionsDisabled}
+              className={shown.reposted ? "reposted" : ""}
             >
-              {busy === "repost" ? (
-                <LoaderCircle size={17} className="animate-spin" />
-              ) : (
-                <Repeat2 size={18} />
-              )}
-              <span>{post.reposts || ""}</span>
+              <Repeat2 size={18} />
+              <span>{shown.reposts || ""}</span>
             </button>
             <button
-              onClick={() => action("like")}
-              aria-label={post.liked ? t("Unlike") : t("Like")}
-              aria-pressed={!!post.liked}
-              disabled={
-                post.platform === "nostr" || !!busy || post.readOnly || post.accountId === "guest"
-              }
-              className={post.liked ? "liked" : ""}
+              onClick={() => toggle("like")}
+              aria-label={shown.liked ? t("Unlike") : t("Like")}
+              aria-pressed={!!shown.liked}
+              aria-busy={pending.like !== undefined}
+              disabled={reactionsDisabled}
+              className={shown.liked ? "liked" : ""}
             >
-              {busy === "like" ? (
-                <LoaderCircle size={17} className="animate-spin" />
-              ) : (
-                <Heart size={17} fill={post.liked ? "currentColor" : "none"} />
-              )}
-              <span>{post.likes || ""}</span>
+              <Heart size={17} fill={shown.liked ? "currentColor" : "none"} />
+              <span>{shown.likes || ""}</span>
             </button>
             <button
               onClick={() => onSave(post)}

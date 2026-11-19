@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { mergePosts, type SocialPost } from "../src/domain/model";
+import { applyReaction, mergePosts, type SocialPost } from "../src/domain/model";
 import { AccountStore } from "../server/store";
 import { mapMastodon, nextCursor } from "../server/adapters/mastodon";
 import { identityKey } from "../server/auth";
@@ -24,6 +24,15 @@ test("mixed feed preserves viewing accounts and merges repeated pages without lo
   assert.equal(result.length, 2);
   assert.equal(result.find((p) => p.accountId === "alice")?.likes, 4);
   assert.equal(result.find((p) => p.accountId === "bob")?.likes, 0);
+});
+test("reactions change the count only when the state changes", () => {
+  const liked = applyReaction(post("alice", 3), "like", true, "at://like");
+  assert.deepEqual([liked.liked, liked.likes, liked.likeUri], [true, 4, "at://like"]);
+  assert.equal(applyReaction(liked, "like", true).likes, 4);
+  const unliked = applyReaction(liked, "like", false);
+  assert.deepEqual([unliked.liked, unliked.likes, unliked.likeUri], [false, 3, undefined]);
+  assert.equal(applyReaction(post("alice"), "repost", false).reposts, undefined);
+  assert.equal(applyReaction({ ...post("alice"), reposted: true }, "repost", false).reposts, 0);
 });
 test("account credentials survive restart encrypted and reject tampering", () => {
   const dir = mkdtempSync(join(tmpdir(), "flare-store-"));
