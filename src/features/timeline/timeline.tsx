@@ -7,6 +7,8 @@ import { LoaderCircle, Check, RefreshCw } from "lucide-react";
 import type { Account, FeedSource, SocialPost } from "../../domain/model";
 import { postIdentity } from "../../domain/model";
 import { useTimeline } from "./use-timeline";
+import { PullToRefresh } from "./pull-to-refresh";
+import { NewPostsButton, useNewPosts } from "./new-posts";
 import { PostCard } from "./post-card";
 import { Button } from "../../components/ui/button";
 export type PostInteractions = {
@@ -18,6 +20,7 @@ export type PostInteractions = {
 };
 export function Timeline({
   sources,
+  pullEnabled,
   preferencesKey,
   accounts,
   source,
@@ -26,6 +29,7 @@ export function Timeline({
   ...interactions
 }: {
   sources?: Record<string, FeedSource>;
+  pullEnabled: boolean;
   preferencesKey: string;
   accounts: Account[];
   source: FeedSource;
@@ -45,6 +49,11 @@ export function Timeline({
     (post) => !filterEnabled || filter === "all" || (filter === "repost") === !!post.boostedBy,
   );
   const groups = groupedFeed(visible, enabled.includes("flare.link-groups"));
+  const timeline = useRef<HTMLDivElement>(null);
+  const newPosts = useNewPosts(timeline, feed.posts);
+  function refreshLatest() {
+    void feed.loadLatest(newPosts.keepPosition);
+  }
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = sentinel.current;
@@ -60,8 +69,26 @@ export function Timeline({
   }, [feed.loading, feed.hasMore, feed.posts.length, feed.errors.length]);
   return (
     <>
-      {feed.errors.map((error) => (
-        <div role="alert" className="feed-error" key={error.id}>
+      <PullToRefresh
+        enabled={pullEnabled}
+        loading={feed.loading}
+        refreshing={feed.refreshing}
+        onRefresh={refreshLatest}
+      />
+      <NewPostsButton count={newPosts.count} onClick={newPosts.showLatest} />
+      {[
+        ...feed.refreshErrors.map((error) => ({
+          ...error,
+          key: "refresh:" + error.id,
+          retry: refreshLatest,
+        })),
+        ...feed.errors.map((error) => ({
+          ...error,
+          key: "page:" + error.id,
+          retry: feed.loadMore,
+        })),
+      ].map((error) => (
+        <div role="alert" className="feed-error" key={error.key}>
           <div>
             <strong>{accounts.find((a) => a.id === error.id)?.displayName}</strong>
             <p>{error.message}</p>
@@ -70,7 +97,7 @@ export function Timeline({
             variant="secondary"
             size="sm"
             disabled={feed.loading}
-            onClick={() => void feed.loadMore()}
+            onClick={() => void error.retry()}
           >
             <RefreshCw />
             {t("Retry")}
@@ -87,7 +114,7 @@ export function Timeline({
           </select>
         </label>
       )}
-      <div className={`timeline ${layout}`}>
+      <div ref={timeline} className={`timeline ${layout}`}>
         {groups.map(([key, posts]) => {
           const cards = posts.map((post) => (
             <PostCard
@@ -100,7 +127,7 @@ export function Timeline({
             />
           ));
           return posts.length === 1 ? (
-            cards
+            cards[0]
           ) : (
             <details key={key} className="rounded-lg border p-3">
               <summary>
@@ -111,7 +138,7 @@ export function Timeline({
           );
         })}
       </div>
-      {feed.loading && (
+      {feed.loading && !feed.refreshing && (
         <div className="loading-state" role="status">
           <LoaderCircle className="animate-spin" size={22} />
           <span>{t("Loading posts…")}</span>

@@ -74,6 +74,10 @@
     "连接账号即可查看通知。"
   ],
   "Loading posts…": ["投稿を読み込み中…", "正在加载帖子…"],
+  "Pull to refresh": ["引っ張って更新", "下拉刷新"],
+  "Release to refresh": ["離して更新", "松开刷新"],
+  "1 new post": ["1 件の新しい投稿", "1 条新动态"],
+  "{count} new posts": ["{count} 件の新しい投稿", "{count} 条新动态"],
   "Nothing here yet": ["投稿はまだありません", "暂无帖子"],
   "New posts will appear here.": ["新しい投稿がここに表示されます。", "新帖子会显示在这里。"],
   "Load more": ["さらに読み込む", "加载更多"],

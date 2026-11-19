@@ -593,6 +593,7 @@ function Workspace({ session }: { session: Session }) {
                   </div>
                 ) : (
                   <Timeline
+                    pullEnabled={showTimelineTabs}
                     sources={route.page === "home" ? custom?.sources : undefined}
                     preferencesKey={storageKey + ":feed-filter:" + route.page + ":" + route.tab}
                     accounts={selected}

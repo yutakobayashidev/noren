@@ -365,6 +365,7 @@ test("touch swipes follow the timeline tabs and leave vertical scrolling to the 
   }
   const active = page.getByRole("tab", { selected: true });
   await expect(page.locator("article").first()).toContainText("Timeline a");
+  await expect(page.locator(".feed-scroll")).toHaveCSS("overscroll-behavior-y", "auto");
   await swipe(40, -200);
   await expect
     .poll(() => page.locator(".feed-scroll").evaluate((el) => el.scrollTop))
@@ -378,4 +379,91 @@ test("touch swipes follow the timeline tabs and leave vertical scrolling to the 
   await swipe(190, 10);
   await expect(active).toHaveAccessibleName("Mastodon");
   await expect(page.locator("article").first()).toContainText("Timeline a");
+});
+
+test("installed app pull-to-refresh loads newer posts above the reading position", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => Object.defineProperty(navigator, "standalone", { value: true }));
+  await fixture(page);
+  const note = (key: string, text: string, minute: number) => ({
+    ...post,
+    key,
+    nativeId: key,
+    text,
+    createdAt: new Date(Date.UTC(2026, 0, 1, 12, minute)).toISOString(),
+  });
+  const shown = Array.from({ length: 20 }, (_, i) => note(String(i), "Garden note " + i, -i));
+  // The newest page does not reach the shown posts, so the refresh has to read the next one too.
+  const pages: Record<string, { posts: unknown[]; nextCursor?: string }> = {
+    head: { posts: [note("new-2", "First bloom", 2)], nextCursor: "gap" },
+    gap: { posts: [note("new-1", "Second bloom", 1), shown[0]], nextCursor: "after-gap" },
+    older: { posts: [note("20", "Garden note 20", -20)] },
+  };
+  let pulling = false;
+  let openHead!: () => void;
+  const head = new Promise<void>((resolve) => (openHead = () => resolve()));
+  const requests: string[] = [];
+  await page.route("**/api/timeline", async (route) => {
+    const { accountId, cursor } = route.request().postDataJSON();
+    if (!pulling) return route.fulfill({ json: { posts: shown, nextCursor: "older" } });
+    requests.push(accountId + ":" + (cursor ?? "head"));
+    if (!cursor) await head;
+    return route.fulfill({ json: pages[cursor ?? "head"] });
+  });
+  await page.getByRole("tab", { name: "Mastodon" }).click();
+  const feed = page.locator(".feed-scroll");
+  const anchor = page.getByText("Garden note 0", { exact: true });
+  await expect(anchor).toBeInViewport();
+  await expect(feed).toHaveCSS("overscroll-behavior-y", "contain");
+  const bounds = (await anchor.boundingBox())!;
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true });
+  const status = page.getByRole("status");
+  const newPosts = page.getByRole("button", { name: /new post/ });
+  async function drag(distance: number, whileHeld: () => Promise<void>) {
+    const x = bounds.x + 4;
+    const y = bounds.y + 4;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x, y: y + (distance * i) / 8 }],
+      });
+    }
+    await whileHeld();
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
+  pulling = true;
+  await expect(newPosts).toBeHidden();
+  // As in Material 3, the indicator moves half as far as the finger and arms at 80 px.
+  await drag(120, () => expect(status).toHaveText("Pull to refresh"));
+  await expect(status).toBeEmpty();
+  expect(requests).toEqual([]);
+  await drag(200, () => expect(status).toHaveText("Release to refresh"));
+  await expect(status).toHaveText("Loading posts…");
+  openHead();
+  await expect(page.locator("article").first()).toContainText("First bloom");
+  await expect(status).toBeEmpty();
+  await expect(page.locator("article")).toHaveCount(22);
+  expect(requests).toEqual(["a:head", "a:gap"]);
+  expect(Math.abs((await anchor.boundingBox())!.y - bounds.y)).toBeLessThan(1);
+  await expect(newPosts).toHaveText("2 new posts");
+  await expect(newPosts).toBeInViewport();
+  // Scrolling up until the lower new post shows leaves one unread above it.
+  await feed.evaluate((el) => el.scrollBy(0, -30));
+  await expect(newPosts).toHaveText("1 new post");
+  await newPosts.click();
+  await expect(newPosts).toBeHidden();
+  await expect(page.getByText("First bloom", { exact: true })).toBeInViewport();
+  expect(await feed.evaluate((el) => el.scrollTop)).toBe(0);
+  // Away from the top, the same gesture scrolls the feed instead of refreshing it.
+  await feed.evaluate((el) => el.scrollTo(0, 300));
+  await drag(200, () => expect(status).toBeEmpty());
+  expect(requests).toEqual(["a:head", "a:gap"]);
+  await feed.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  await expect(page.getByText("Garden note 20", { exact: true })).toBeAttached();
+  expect(requests).toEqual(["a:head", "a:gap", "a:older"]);
 });
