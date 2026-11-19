@@ -295,6 +295,10 @@ textarea:focus {
   overflow: hidden;
   box-shadow: 0 1px 0 #28203503;
 }
+.timeline-gap {
+  column-span: all;
+  margin-bottom: 14px;
+}
 .post-layout {
   display: flex;
   gap: 11px;
@@ -808,6 +812,9 @@ textarea:focus {
   .post-card {
     padding: 16px 13px 9px;
     border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .timeline-gap {
     margin-bottom: 10px;
   }
   .post-layout {

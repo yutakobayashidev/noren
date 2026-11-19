@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "re
 import { ChevronsUp } from "lucide-react";
 import type { SocialPost } from "../../domain/model";
 import { t } from "../../lib/i18n";
+import type { TimelineGap } from "./use-timeline";
 
 function cards(list: HTMLElement) {
   return Array.from(list.querySelectorAll<HTMLElement>("[data-post-id]"));
@@ -9,9 +10,14 @@ function cards(list: HTMLElement) {
 
 // Keeps the post on screen in place when newer posts are inserted above it, and counts those
 // posts until the reader scrolls up to them, as Flare's "N new posts" button does.
-export function useNewPosts(timeline: RefObject<HTMLDivElement | null>, posts: SocialPost[]) {
+export function useNewPosts(
+  timeline: RefObject<HTMLDivElement | null>,
+  posts: SocialPost[],
+  gaps: TimelineGap[],
+) {
   const anchor = useRef<{ id: string; top: number; shown: Set<string> } | null>(null);
   const [count, setCount] = useState(0);
+  // Runs after posts or gap rows change, since both move the posts below them.
   useLayoutEffect(() => {
     const list = timeline.current;
     const scroll = list?.parentElement;
@@ -27,7 +33,7 @@ export function useNewPosts(timeline: RefObject<HTMLDivElement | null>, posts: S
     // the top and already sees them.
     const added = rendered.findIndex((element) => saved.shown.has(element.dataset.postId!));
     if (added > 0 && scroll.scrollTop > 0) setCount((value) => value + added);
-  }, [timeline, posts]);
+  }, [timeline, posts, gaps]);
   useEffect(() => {
     const element = timeline.current;
     const container = element?.parentElement;
@@ -51,14 +57,19 @@ export function useNewPosts(timeline: RefObject<HTMLDivElement | null>, posts: S
   }, [timeline, count]);
   return {
     count,
-    // Call just before newer posts are merged in.
-    keepPosition() {
+    // Call just before the rows change. Like Flare, a gap load keeps the post below the gap in
+    // place while it is on screen; otherwise the first post on screen stays.
+    keepPosition(preferred?: string) {
       const list = timeline.current;
       const scroll = list?.parentElement;
       if (!list || !scroll) return;
       const rendered = cards(list);
-      const top = scroll.getBoundingClientRect().top;
-      const card = rendered.find((element) => element.getBoundingClientRect().bottom > top);
+      const { top, bottom } = scroll.getBoundingClientRect();
+      const card =
+        rendered.find((element) => {
+          const rect = element.getBoundingClientRect();
+          return element.dataset.postId === preferred && rect.bottom > top && rect.top < bottom;
+        }) ?? rendered.find((element) => element.getBoundingClientRect().bottom > top);
       if (card)
         anchor.current = {
           id: card.dataset.postId!,
