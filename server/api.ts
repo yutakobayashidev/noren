@@ -26,10 +26,10 @@ import {
   forgetBluesky,
 } from "./adapters/bluesky";
 import { twitterProfiles, twitterClient, twitterFeed, twitterPost } from "./adapters/twitter";
-import type { SocialPost } from "../src/domain/model";
+import { supportsRecommended, type SocialPost } from "../src/domain/model";
 
 const sourceSchema = z.object({
-  kind: z.enum(["home", "search", "user", "list"]),
+  kind: z.enum(["home", "recommended", "search", "user", "list"]),
   query: z.string().max(1000).optional(),
   target: z.string().max(1000).optional(),
 });
@@ -196,6 +196,8 @@ export function apiRouter() {
       .parse(req.body);
     const store: AccountStore = res.locals.store;
     const account = accountId === "guest" ? guest : store.get(accountId);
+    if (source.kind === "recommended" && !supportsRecommended(account.platform))
+      throw new Error("Recommended timelines are available for X accounts only.");
     if (account.platform === "misskey") {
       res.json(await misskeyFeed(account, source, cursor));
       return;

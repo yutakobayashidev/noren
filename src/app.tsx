@@ -29,7 +29,7 @@ import {
   AlignLeft,
 } from "lucide-react";
 import type { Account, SocialPost, Tab, FeedSource } from "./domain/model";
-import { postIdentity, platformNames } from "./domain/model";
+import { postIdentity, platformNames, supportsRecommended } from "./domain/model";
 import { api, errorMessage } from "./lib/api";
 import { useStored } from "./lib/storage";
 import { Button } from "./components/ui/button";
@@ -141,6 +141,10 @@ function Workspace({ session }: { session: Session }) {
   const [refresh, setRefresh] = useState(0);
   const [searchText, setSearchText] = useState(route.query);
   const [tabs, setTabs] = useStored<Tab[]>(`${storageKey}:tabs`, []);
+  const [homeFeeds, setHomeFeeds] = useStored<Record<string, "latest" | "recommended">>(
+    `${storageKey}:home-feeds`,
+    {},
+  );
   const [watches, setWatches] = useStored<Watch[]>(storageKey + ":follow-ups", []);
   const [notes, setNotes] = useStored<Record<string, string>>(storageKey + ":notes", {});
   const [noteQuery, setNoteQuery] = useState("");
@@ -262,12 +266,17 @@ function Workspace({ session }: { session: Session }) {
     selected = available.filter((a) => Object.hasOwn(custom.sources!, a.id));
   if (route.page === "profile")
     selected = available.filter((account) => account.id === route.account);
+  const rankedAccount =
+    route.page === "home" && !custom
+      ? accounts.find((a) => a.id === route.tab && supportsRecommended(a.platform))
+      : undefined;
+  const homeFeed = rankedAccount ? (homeFeeds[rankedAccount.id] ?? "latest") : "latest";
   const source: FeedSource =
     route.page === "discover"
       ? { kind: "search", query: route.query }
       : route.page === "profile"
         ? { kind: "user", target: route.profile }
-        : (custom?.source ?? { kind: "home" });
+        : (custom?.source ?? { kind: homeFeed === "recommended" ? "recommended" : "home" });
   const title =
     route.page === "plugins"
       ? t("Browse plugins")
@@ -467,6 +476,24 @@ function Workspace({ session }: { session: Session }) {
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+              {rankedAccount && (
+                <div className="feed-switch" role="group" aria-label={t("Home timeline")}>
+                  {(
+                    [
+                      { id: "latest", label: t("Latest") },
+                      { id: "recommended", label: t("Recommended") },
+                    ] as const
+                  ).map(({ id, label }) => (
+                    <button
+                      key={id}
+                      aria-pressed={homeFeed === id}
+                      onClick={() => setHomeFeeds((old) => ({ ...old, [rankedAccount.id]: id }))}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               )}
               {route.page === "discover" && (

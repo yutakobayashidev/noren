@@ -41,7 +41,7 @@ export type SocialPost = {
   readOnly?: boolean;
 };
 export type FeedSource = {
-  kind: "home" | "search" | "user" | "list";
+  kind: "home" | "recommended" | "search" | "user" | "list";
   query?: string;
   target?: string;
 };
@@ -71,9 +71,13 @@ export const platformNames: Record<Platform, string> = {
 export function postIdentity(post: SocialPost) {
   return `${post.accountId}:${post.key}`;
 }
-export function mergePosts(previous: SocialPost[], incoming: SocialPost[]) {
+export function supportsRecommended(platform: Platform) {
+  return platform === "twitter";
+}
+export function mergePosts(previous: SocialPost[], incoming: SocialPost[], ranked = false) {
   const posts = new Map(previous.map((post) => [postIdentity(post), post]));
   incoming.forEach((post) => posts.set(postIdentity(post), post));
+  if (ranked) return [...posts.values()];
   return [...posts.values()].sort(
     (a, b) => (Date.parse(b.createdAt ?? "") || 0) - (Date.parse(a.createdAt ?? "") || 0),
   );

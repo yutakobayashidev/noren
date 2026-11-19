@@ -52,6 +52,9 @@ export function useTimeline(
   const gapsRef = useRef(gaps);
   gapsRef.current = gaps;
   const key = JSON.stringify([accountIds, source, refresh, sources]);
+  // Recommended feeds arrive in the order the service ranked them; sorting by date would undo that.
+  const ranked =
+    accountIds.length === 1 && (sources?.[accountIds[0]] ?? source).kind === "recommended";
   const load = useCallback(
     async (mode: "reset" | "more" | "latest", beforeMerge?: () => void) => {
       const reset = mode === "reset";
@@ -90,18 +93,24 @@ export function useTimeline(
       if (current.signal.aborted) return;
       beforeMerge?.();
       if (latest) {
-        const added = results.flatMap((r) =>
-          r.page ? gapAfterRefresh(r.id, r.page, postsRef.current) : [],
-        );
+        // A ranked feed has no chronological gap: a refresh is a fresh set of recommendations.
+        const added = ranked
+          ? []
+          : results.flatMap((r) => (r.page ? gapAfterRefresh(r.id, r.page, postsRef.current) : []));
         setGaps((old) => [...old, ...added.filter((gap) => !old.some((o) => o.id === gap.id))]);
         setRefreshErrors(results.flatMap((r) => (r.error ? [{ id: r.id, message: r.error }] : [])));
       }
-      setPosts((old) =>
-        mergePosts(
-          reset ? [] : old,
-          results.flatMap((r) => r.page?.posts || []),
-        ),
-      );
+      const incoming = results.flatMap((r) => r.page?.posts || []);
+      setPosts((old) => {
+        if (!(ranked && latest)) return mergePosts(reset ? [] : old, incoming, ranked);
+        // Refreshed recommendations go above the ones already read, in their ranked order.
+        const ids = new Set(incoming.map(postIdentity));
+        return mergePosts(
+          incoming,
+          old.filter((post) => !ids.has(postIdentity(post))),
+          true,
+        );
+      });
       setPages((old) => {
         const next = reset ? {} : { ...old };
         for (const result of results) {

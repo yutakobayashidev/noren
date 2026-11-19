@@ -499,3 +499,103 @@ test("installed app pull-to-refresh loads newer posts above the reading position
   await expect(page.getByText("Garden note 20", { exact: true })).toBeAttached();
   expect(requests).toEqual(["a:head", "a:gap", "a:gap", "a:older"]);
 });
+test("X home switches between latest and recommended timelines in ranked order", async ({
+  page,
+}) => {
+  const x = { ...account, id: "x", platform: "twitter", displayName: "X Alex", handle: "alex" };
+  const ranked = [
+    { ...post, key: "twitter:1", accountId: "x", platform: "twitter", nativeId: "1" },
+    { ...post, key: "twitter:2", accountId: "x", platform: "twitter", nativeId: "2" },
+  ];
+  ranked[0] = { ...ranked[0], text: "Older but ranked first", createdAt: "2026-01-01T00:00:00Z" };
+  ranked[1] = { ...ranked[1], text: "Newer but ranked second", createdAt: "2026-02-01T00:00:00Z" };
+  const kinds: string[] = [];
+  await page.route("**/api/accounts", (route) =>
+    route.fulfill({ json: { accounts: [account, x], guest: null } }),
+  );
+  await page.route("**/api/timeline", (route) => {
+    const { accountId, source } = route.request().postDataJSON();
+    if (accountId === "x") kinds.push(source.kind);
+    return route.fulfill({
+      json: {
+        posts:
+          accountId !== "x"
+            ? [post]
+            : source.kind === "recommended"
+              ? ranked
+              : [{ ...ranked[1], text: "Latest from people you follow" }],
+      },
+    });
+  });
+  await page.goto("/");
+  await expect(page.getByRole("group", { name: "Home timeline" })).toHaveCount(0);
+  await page.getByRole("tab", { name: "X", exact: true }).click();
+  const latest = page.getByRole("button", { name: "Latest", exact: true });
+  const recommended = page.getByRole("button", { name: "Recommended", exact: true });
+  await expect(latest).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("Latest from people you follow")).toBeVisible();
+  await recommended.click();
+  await expect(recommended).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".post-card")).toHaveCount(2);
+  await expect(page.locator(".post-card").first()).toContainText("Older but ranked first");
+  await page.reload();
+  await expect(recommended).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".post-card").first()).toContainText("Older but ranked first");
+  await latest.click();
+  await expect(page.getByText("Latest from people you follow")).toBeVisible();
+  expect(kinds).toEqual(expect.arrayContaining(["home", "recommended"]));
+});
+test("pulling a recommended feed puts fresh recommendations on top without a gap", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => Object.defineProperty(navigator, "standalone", { value: true }));
+  const x = { ...account, id: "x", platform: "twitter", displayName: "X Alex", handle: "alex" };
+  const pick = (id: string, text: string, day: number) => ({
+    ...post,
+    key: "twitter:" + id,
+    accountId: "x",
+    platform: "twitter",
+    nativeId: id,
+    text,
+    createdAt: new Date(Date.UTC(2026, 0, day)).toISOString(),
+  });
+  let pulled = false;
+  await page.route("**/api/accounts", (route) =>
+    route.fulfill({ json: { accounts: [x], guest: null } }),
+  );
+  await page.route("**/api/timeline", (route) => {
+    const { source, cursor } = route.request().postDataJSON();
+    if (source.kind !== "recommended" || cursor) return route.fulfill({ json: { posts: [] } });
+    return route.fulfill({
+      json: pulled
+        ? { posts: [pick("3", "Fresh pick", 1), pick("1", "First pick", 2)], nextCursor: "more" }
+        : { posts: [pick("1", "First pick", 2), pick("2", "Second pick", 9)], nextCursor: "more" },
+    });
+  });
+  await page.goto("/#tab=x");
+  await page.getByRole("button", { name: "Recommended", exact: true }).click();
+  const cards = page.locator(".post-card");
+  await expect(cards.first()).toContainText("First pick");
+  const bounds = (await cards.first().boundingBox())!;
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true });
+  const [x0, y0] = [bounds.x + 4, bounds.y + 4];
+  pulled = true;
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: x0, y: y0 }],
+  });
+  for (let i = 1; i <= 8; i++)
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: x0, y: y0 + 25 * i }],
+    });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await expect(cards).toHaveCount(3);
+  await expect(cards.nth(0)).toContainText("Fresh pick");
+  await expect(cards.nth(1)).toContainText("First pick");
+  await expect(cards.nth(2)).toContainText("Second pick");
+  await expect(page.locator(".timeline-gap")).toHaveCount(0);
+});

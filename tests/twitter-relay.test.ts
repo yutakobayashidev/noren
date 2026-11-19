@@ -1,5 +1,5 @@
 import { expect, test, vi } from "vite-plus/test";
-import { twitterClient } from "../server/adapters/twitter";
+import { twitterClient, twitterFeed } from "../server/adapters/twitter";
 
 test("connects the selected relay profile using its recorded Viewer request", async () => {
   const origin = "https://relay.example";
@@ -53,6 +53,70 @@ test("connects the selected relay profile using its recorded Viewer request", as
     expect(options?.headers).toEqual({ "x-profile-name": profile });
   } finally {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  }
+});
+
+test("the recommended feed reads X's ranked home timeline without promoted posts", async () => {
+  const account = {
+    id: "twitter:ranked-profile",
+    platform: "twitter" as const,
+    origin: "https://relay.example",
+    profile: "ranked-profile",
+    displayName: "ranked",
+    handle: "ranked",
+    canPost: true,
+  };
+  const tweet = (id: string, createdAt: string, promoted = false) => ({
+    entryId: (promoted ? "promoted-tweet-" : "tweet-") + id,
+    content: {
+      itemContent: {
+        ...(promoted ? { promotedMetadata: { advertiser_results: {} } } : {}),
+        tweet_results: {
+          result: {
+            __typename: "Tweet",
+            rest_id: id,
+            core: {
+              user_results: {
+                result: { rest_id: "7", core: { screen_name: "author", name: "Author" } },
+              },
+            },
+            legacy: { full_text: "post " + id, created_at: createdAt, conversation_id_str: id },
+          },
+        },
+      },
+    },
+  });
+  vi.stubEnv("TWITTER_RELAY_BASE_URL", account.origin);
+  const client = twitterClient(account) as any;
+  vi.spyOn(client, "getQueryId").mockResolvedValue("current-query-id");
+  const request = vi.spyOn(client, "fetchWithTimeout").mockResolvedValue(
+    Response.json({
+      data: {
+        home: {
+          home_timeline_urt: {
+            instructions: [
+              {
+                entries: [
+                  tweet("1", "Mon Jan 01 00:00:00 +0000 2024"),
+                  tweet("2", "Fri Jan 05 00:00:00 +0000 2024", true),
+                  tweet("3", "Wed Jan 03 00:00:00 +0000 2024"),
+                  { entryId: "cursor-bottom", content: { cursorType: "Bottom", value: "next" } },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }),
+  );
+  try {
+    const page = await twitterFeed(account, { kind: "recommended" });
+    expect(String(request.mock.calls[0][0])).toContain("/current-query-id/HomeTimeline?");
+    expect(page.posts.map((post) => post.nativeId)).toEqual(["1", "3"]);
+    expect(page.nextCursor).toBe("next");
+  } finally {
+    vi.restoreAllMocks();
     vi.unstubAllEnvs();
   }
 });
