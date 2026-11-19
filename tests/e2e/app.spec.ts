@@ -329,3 +329,53 @@ test("event timeline combines account-specific sources and expires without remov
   await page.getByRole("button", { name: "Saved", exact: true }).first().click();
   await expect(page.getByText(post.text)).toBeVisible();
 });
+
+test("touch swipes follow the timeline tabs and leave vertical scrolling to the feed", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await fixture(page);
+  await page.route("**/api/timeline", (route) =>
+    route.fulfill({
+      json: {
+        posts: Array.from({ length: 20 }, (_, i) => ({
+          ...post,
+          key: String(i),
+          nativeId: String(i),
+          text: "Timeline " + route.request().postDataJSON().accountId + " post " + i,
+        })),
+      },
+    }),
+  );
+  await page.getByRole("tab", { name: "Mastodon" }).click();
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true });
+  async function swipe(dx: number, dy: number) {
+    const x = dx < 0 ? 300 : 85;
+    const y = 450;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: x + (dx * i) / 8, y: y + (dy * i) / 8 }],
+      });
+    }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
+  const active = page.getByRole("tab", { selected: true });
+  await expect(page.locator("article").first()).toContainText("Timeline a");
+  await swipe(40, -200);
+  await expect
+    .poll(() => page.locator(".feed-scroll").evaluate((el) => el.scrollTop))
+    .toBeGreaterThan(0);
+  await expect(active).toHaveAccessibleName("Mastodon");
+  await swipe(-190, 10);
+  await expect(active).toHaveAccessibleName("Bluesky");
+  await expect(page.locator("article").first()).toContainText("Timeline b");
+  await swipe(-190, 10);
+  await expect(active).toHaveAccessibleName("Bluesky");
+  await swipe(190, 10);
+  await expect(active).toHaveAccessibleName("Mastodon");
+  await expect(page.locator("article").first()).toContainText("Timeline a");
+});
