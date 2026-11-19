@@ -1,8 +1,16 @@
 diff --git a/dist/lib/twitter-client-utils.d.ts b/dist/lib/twitter-client-utils.d.ts
-index c41d2f6fc7d22a547897c562973200f5f7d8cfb6..6465b1a5aad84d0d80b25d6b88443a0b75240ad1 100644
+index c41d2f6fc7d22a547897c562973200f5f7d8cfb6..5f34473eff81b748d28c32ced075daf14ac7c3b6 100644
 --- a/dist/lib/twitter-client-utils.d.ts
 +++ b/dist/lib/twitter-client-utils.d.ts
-@@ -161,6 +161,9 @@ export declare function parseTweetsFromInstructions(instructions: Array<{
+@@ -81,6 +81,7 @@ export declare function findTweetInInstructions(instructions: Array<{
+     }>;
+ }> | undefined, tweetId: string): GraphqlTweetResult | undefined;
+ export declare function collectTweetResultsFromEntry(entry: {
++    entryId?: string;
+     content?: {
+         itemContent?: {
+             tweet_results?: {
+@@ -161,6 +162,9 @@ export declare function parseTweetsFromInstructions(instructions: Array<{
      }>;
  }> | undefined, quoteDepthOrOptions: number | ParseTweetsOptions): TweetData[];
  export declare function extractCursorFromInstructions(instructions: Array<{
@@ -13,10 +21,40 @@ index c41d2f6fc7d22a547897c562973200f5f7d8cfb6..6465b1a5aad84d0d80b25d6b88443a0b
          content?: unknown;
      }>;
 diff --git a/dist/lib/twitter-client-utils.js b/dist/lib/twitter-client-utils.js
-index 7e7b1700d17b7019a38d4d10acdfe0fbc358f6c6..211f360c9aea7cefa2bd117778a9a836659830ff 100644
+index 7e7b1700d17b7019a38d4d10acdfe0fbc358f6c6..0d0ff29623c0a10d7e5d82ce8fcd415006638db6 100644
 --- a/dist/lib/twitter-client-utils.js
 +++ b/dist/lib/twitter-client-utils.js
-@@ -461,7 +461,8 @@ export function parseTweetsFromInstructions(instructions, quoteDepthOrOptions) {
+@@ -424,18 +424,22 @@ export function findTweetInInstructions(instructions, tweetId) {
+ }
+ export function collectTweetResultsFromEntry(entry) {
+     const results = [];
+-    const pushResult = (result) => {
+-        if (result?.rest_id) {
++    if (typeof entry.entryId === 'string' && entry.entryId.startsWith('promoted-')) {
++        return results;
++    }
++    const pushItem = (itemContent) => {
++        const result = itemContent?.tweet_results?.result;
++        if (result?.rest_id && !itemContent.promotedMetadata) {
+             results.push(result);
+         }
+     };
+     const content = entry.content;
+-    pushResult(content?.itemContent?.tweet_results?.result);
+-    pushResult(content?.item?.itemContent?.tweet_results?.result);
++    pushItem(content?.itemContent);
++    pushItem(content?.item?.itemContent);
+     for (const item of content?.items ?? []) {
+-        pushResult(item?.item?.itemContent?.tweet_results?.result);
+-        pushResult(item?.itemContent?.tweet_results?.result);
+-        pushResult(item?.content?.itemContent?.tweet_results?.result);
++        pushItem(item?.item?.itemContent);
++        pushItem(item?.itemContent);
++        pushItem(item?.content?.itemContent);
+     }
+     return results;
+ }
+@@ -461,7 +465,8 @@ export function parseTweetsFromInstructions(instructions, quoteDepthOrOptions) {
  }
  export function extractCursorFromInstructions(instructions, cursorType = 'Bottom') {
      for (const instruction of instructions ?? []) {

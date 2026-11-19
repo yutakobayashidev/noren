@@ -2,6 +2,7 @@ import { EnabledActions } from "../../plugins/post-actions";
 import { t } from "../../lib/i18n";
 import { useState, useEffect, useContext } from "react";
 import type { Account, Tab, FeedSource } from "../../domain/model";
+import { supportsRecommended } from "../../domain/model";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { api, errorMessage } from "../../lib/api";
@@ -23,7 +24,7 @@ export function TabDialog({
     const target = String(new FormData(form).get("target") ?? "");
     return kind === "search"
       ? { kind, query: target }
-      : kind === "home"
+      : kind === "home" || kind === "recommended"
         ? { kind }
         : { kind, target };
   };
@@ -31,6 +32,11 @@ export function TabDialog({
   const [accountId, setAccountId] = useState(accounts[0]?.id || "");
   const [lists, setLists] = useState<{ id: string; title: string }[]>([]);
   const [error, setError] = useState("");
+  const platform = accounts.find((a) => a.id === accountId)?.platform;
+  const recommendedAvailable = !!platform && supportsRecommended(platform);
+  useEffect(() => {
+    if (kind === "recommended" && !recommendedAvailable) setKind("home");
+  }, [kind, recommendedAvailable]);
   useEffect(() => {
     if (open) {
       setAdditional({});
@@ -101,6 +107,7 @@ export function TabDialog({
             {t("Timeline")}
             <select value={kind} onChange={(e) => setKind(e.target.value as FeedSource["kind"])}>
               <option value="home">{t("Home")}</option>
+              {recommendedAvailable && <option value="recommended">{t("Recommended")}</option>}
               <option value="search">{t("Search")}</option>
               <option value="user">{t("Profile")}</option>
               <option value="list">{t("List")}</option>
@@ -119,7 +126,8 @@ export function TabDialog({
               </select>
             </label>
           ) : (
-            kind !== "home" && (
+            kind !== "home" &&
+            kind !== "recommended" && (
               <label>
                 {kind === "search" ? t("Search query") : t("Handle")}
                 <input
@@ -159,7 +167,9 @@ export function TabDialog({
                     {Object.entries(additional).map(([id, s]) => (
                       <li key={id}>
                         {accounts.find((a) => a.id === id)?.displayName} ·{" "}
-                        {s.query || s.target || t("Home")}{" "}
+                        {s.query ||
+                          s.target ||
+                          t(s.kind === "recommended" ? "Recommended" : "Home")}{" "}
                         <button
                           type="button"
                           onClick={() =>

@@ -98,7 +98,8 @@ export async function twitterFeed(
       ...options,
       pageDelayMs: 0,
     });
-  } else result = await client.getHomeLatestTimeline(30, options);
+  } else if (source.kind === "recommended") result = await client.getHomeTimeline(30, options);
+  else result = await client.getHomeLatestTimeline(30, options);
   if (!result.success) throw new Error("Could not load X. Check the relay and selected profile.");
   return {
     posts: result.tweets.map((p) => twitterPost(p, account)),

@@ -129,3 +129,15 @@ test("private social server addresses are rejected", () => {
     assert.equal(isPublicAddress(ip), false, ip);
   assert.equal(isPublicAddress("8.8.8.8"), true);
 });
+test("ranked feeds keep the service order while chronological feeds sort by date", () => {
+  const older = { ...post("alice"), key: "older", createdAt: "2026-01-01T00:00:00Z" };
+  const newer = { ...post("alice"), key: "newer", createdAt: "2026-02-01T00:00:00Z" };
+  assert.deepEqual(
+    mergePosts([], [older, newer], true).map((p) => p.key),
+    ["older", "newer"],
+  );
+  assert.deepEqual(
+    mergePosts([], [older, newer]).map((p) => p.key),
+    ["newer", "older"],
+  );
+});
