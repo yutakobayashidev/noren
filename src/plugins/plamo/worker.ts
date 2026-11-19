@@ -46,8 +46,13 @@ async function load(allowDownload: boolean) {
   engine = runtime;
   return engine;
 }
-self.onmessage = async ({ data: { text, language, allowDownload } }) => {
+self.onmessage = async ({ data: { text, language, allowDownload, download } }) => {
   try {
+    if (download) {
+      await getModel(true, (bytes) => self.postMessage({ progress: bytes }));
+      self.postMessage({ text: "" });
+      return;
+    }
     if (!text.trim() || text.includes("<|plamo:")) throw new Error("Unsupported post text");
     const runtime = await load(allowDownload);
     const prompt =

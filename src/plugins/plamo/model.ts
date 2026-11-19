@@ -24,3 +24,12 @@ export async function deleteModel() {
       if (!(e instanceof DOMException && e.name === "NotFoundError")) throw e;
     }
 }
+
+const listeners = new Set<() => void>();
+export function onModelChange(listener: () => void) {
+  listeners.add(listener);
+  return () => void listeners.delete(listener);
+}
+export function notifyModelChange() {
+  listeners.forEach((listener) => listener());
+}

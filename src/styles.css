@@ -1028,3 +1028,15 @@ textarea:focus {
     transition: none;
   }
 }
+.auto-translation {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.auto-translation button {
+  color: var(--primary);
+  font-weight: 500;
+}
+.auto-translation button:hover {
+  text-decoration: underline;
+}

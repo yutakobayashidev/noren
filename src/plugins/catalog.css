@@ -273,3 +273,54 @@
   padding: 9px 12px;
   border-radius: 8px;
 }
+.plamo-settings {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+}
+.registry-action-entry > div {
+  flex: 1;
+  min-width: 0;
+}
+.plamo-settings fieldset {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.plamo-settings fieldset:disabled {
+  opacity: 0.6;
+}
+.plamo-settings legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+.plamo-settings .plamo-toggle,
+.plamo-settings .plamo-language {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.plamo-settings .plamo-toggle input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--primary);
+}
+.plamo-settings .plamo-language select {
+  width: auto;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.plamo-model {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.plamo-model p {
+  flex-basis: 100%;
+}

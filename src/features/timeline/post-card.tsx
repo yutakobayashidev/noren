@@ -1,5 +1,8 @@
 import { PostReadingTools } from "../../plugins/post-reading-tools";
 import { postActions, EnabledActions } from "../../plugins/post-actions";
+import { AutoTranslate, autoTranslate, cachedTranslation } from "../../plugins/plamo/auto";
+import { needsTranslation } from "../../plugins/plamo/language";
+import { onModelChange } from "../../plugins/plamo/model";
 import { t } from "../../lib/i18n";
 import { useState, useContext, useEffect, useRef } from "react";
 import { Heart, Repeat2, MessageCircle, Bookmark, ExternalLink, LoaderCircle } from "lucide-react";
@@ -69,6 +72,12 @@ export function PostCard({
   compact?: boolean;
 }) {
   const enabledActions = useContext(EnabledActions);
+  const auto = useContext(AutoTranslate);
+  const card = useRef<HTMLElement>(null);
+  const [translated, setTranslated] = useState<{ language: string; text: string } | null>(null);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const [modelVersion, setModelVersion] = useState(0);
+  useEffect(() => onModelChange(() => setModelVersion((value) => value + 1)), []);
   const [pluginResult, setPluginResult] = useState("");
   const [downloaded, setDownloaded] = useState(0);
   const [runningPlugin, setRunningPlugin] = useState("");
@@ -85,6 +94,46 @@ export function PostCard({
   const [revealed, setRevealed] = useState(false);
   const [media, setMedia] = useState<string | null>(null);
   const concealed = (post.sensitive || post.contentWarning) && !revealed;
+  const autoLanguage =
+    auto?.enabled && !concealed && needsTranslation(post.text, auto.language, post.language)
+      ? auto.language
+      : undefined;
+  useEffect(() => {
+    setShowOriginal(false);
+    if (!autoLanguage) return setTranslated(null);
+    const done = cachedTranslation(post.text, autoLanguage);
+    if (done) return setTranslated({ language: autoLanguage, text: done });
+    setTranslated(null);
+    const element = card.current;
+    if (!element || typeof IntersectionObserver === "undefined") return;
+    let running: AbortController | null = null;
+    // Only posts on screen are queued; leaving the screen drops a request that has not started.
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) {
+        running?.abort();
+        running = null;
+        return;
+      }
+      if (running) return;
+      const controller = new AbortController();
+      running = controller;
+      autoTranslate(post.text, autoLanguage, controller.signal).then(
+        (text) => {
+          if (controller.signal.aborted) return;
+          observer.disconnect();
+          setTranslated({ language: autoLanguage, text });
+        },
+        () => {
+          if (running === controller) running = null;
+        },
+      );
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      running?.abort();
+    };
+  }, [autoLanguage, post.text, modelVersion]);
   async function action(kind: "like" | "repost") {
     const active = kind === "like" ? post.liked : post.reposted;
     setBusy(kind);
@@ -117,7 +166,11 @@ export function PostCard({
     }
   }
   return (
-    <article data-post-id={postIdentity(post)} className={`post-card ${compact ? "compact" : ""}`}>
+    <article
+      ref={card}
+      data-post-id={postIdentity(post)}
+      className={`post-card ${compact ? "compact" : ""}`}
+    >
       {post.boostedBy && (
         <div className="boost-label">
           <Repeat2 size={13} />
@@ -162,13 +215,30 @@ export function PostCard({
             </div>
           ) : (
             <>
-              <div className="post-text">
-                {post.html ? (
+              <div
+                className="post-text"
+                lang={translated && !showOriginal ? translated.language : undefined}
+              >
+                {translated && !showOriginal ? (
+                  <PostText text={translated.text} />
+                ) : post.html ? (
                   <div dangerouslySetInnerHTML={{ __html: post.html }} />
                 ) : (
                   <PostText text={post.text} />
                 )}
               </div>
+              {translated && (
+                <p className="auto-translation">
+                  {t(showOriginal ? "Original post" : "Translated on this device by PLaMo")}
+                  {" · "}
+                  <button
+                    aria-pressed={showOriginal}
+                    onClick={() => setShowOriginal(!showOriginal)}
+                  >
+                    {t(showOriginal ? "Show translation" : "Show original")}
+                  </button>
+                </p>
+              )}
               {inline && enabledActions.includes(inline.grant) && (
                 <p className="post-text border-l-2 pl-3" role="status">
                   {inline.text}
@@ -178,7 +248,7 @@ export function PostCard({
                 post={post}
                 saved={saved}
                 translation={
-                  inline && enabledActions.includes(inline.grant) ? inline.text : undefined
+                  inline && enabledActions.includes(inline.grant) ? inline.text : translated?.text
                 }
               />
               {!!post.media?.length && (
@@ -277,7 +347,12 @@ export function PostCard({
               <ExternalLink size={16} />
             </a>
             {postActions
-              .filter((action) => !concealed && enabledActions.includes(action.grant))
+              .filter(
+                (action) =>
+                  !concealed &&
+                  enabledActions.includes(action.grant) &&
+                  !(translated && action.permissions?.includes("model.plamo")),
+              )
               .map((action) => (
                 <button
                   key={action.id}
@@ -295,7 +370,7 @@ export function PostCard({
                     try {
                       setError("");
                       const result = await action.run(
-                        { post: { text: post.text, url: post.url } },
+                        { post: { text: post.text, url: post.url }, language: auto?.language },
                         controller.signal,
                         setDownloaded,
                       );
