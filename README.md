@@ -49,6 +49,18 @@ The interactive author guide at `/site/en/plugins/` walks through turning a post
 - `pnpm build` — build the client and the embedded Astro site
 - `pnpm site:dev` — start the standalone landing page
 
+Pull requests run the `CI` check: `pnpm check`, the production build and Playwright
+browser tests. The browser tests use development authentication and do not verify
+production sign-in or real accounts. Device-specific changes still need the
+requested physical-device checks.
+
+The `main` branch requires a pull request and a successful, up-to-date `CI` check
+before merging. Merge manually after reviewing the changes; an agent completing
+its task or moving an issue to **In review** does not establish that CI passed.
+Without a required check, GitHub can allow a merge even when no CI ran or a test
+failed. Agents sharing the owner's GitHub credentials have the same permissions
+as the owner; this setup does not enforce a separate human identity.
+
 Local preview is available. Production sign-in, real-account checks and Android translation benchmarks are still open. [Release status](docs/en/release-status.md)
 
 ## License and credits
