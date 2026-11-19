@@ -82,3 +82,23 @@ export function mergePosts(previous: SocialPost[], incoming: SocialPost[], ranke
     (a, b) => (Date.parse(b.createdAt ?? "") || 0) - (Date.parse(a.createdAt ?? "") || 0),
   );
 }
+export type ReactionKind = "like" | "repost";
+/** Sets a reaction to `active`, adjusting the count only when the state actually changes. */
+export function applyReaction(
+  post: SocialPost,
+  kind: ReactionKind,
+  active: boolean,
+  uri?: string,
+): SocialPost {
+  const [flag, count, uriKey] =
+    kind === "like"
+      ? (["liked", "likes", "likeUri"] as const)
+      : (["reposted", "reposts", "repostUri"] as const);
+  const changed = !!post[flag] !== active;
+  return {
+    ...post,
+    [flag]: active,
+    [count]: changed ? Math.max(0, (post[count] || 0) + (active ? 1 : -1)) : post[count],
+    ...(!active ? { [uriKey]: undefined } : uri !== undefined ? { [uriKey]: uri } : {}),
+  };
+}

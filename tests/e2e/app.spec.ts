@@ -77,6 +77,50 @@ test("native-style feed supports reactions, saved posts, thread, theme and acces
     .analyze();
   expect(results.violations).toEqual([]);
 });
+test("reactions update immediately and send one request while the first is pending", async ({
+  page,
+}) => {
+  await fixture(page);
+  const actions: string[] = [];
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/action", async (route) => {
+    actions.push(route.request().postDataJSON().action);
+    await held;
+    await route.fulfill({ json: { post: { ...post, liked: true, likes: 4 } } });
+  });
+  await page.getByRole("button", { name: "Like", exact: true }).click();
+  const unlike = page.getByRole("button", { name: "Unlike", exact: true });
+  await expect(unlike).toHaveAttribute("aria-pressed", "true");
+  await expect(unlike).toHaveText("4");
+  for (let i = 0; i < 3; i++) await unlike.click();
+  await expect(unlike).toHaveText("4");
+  release();
+  await expect(unlike).not.toHaveAttribute("aria-busy", "true");
+  await expect(unlike).toHaveText("4");
+  expect(actions).toEqual(["like"]);
+});
+test("a failed reaction rolls back, explains why and can be retried", async ({ page }) => {
+  await fixture(page);
+  const actions: string[] = [];
+  await page.route("**/api/action", (route) => {
+    actions.push(route.request().postDataJSON().action);
+    return actions.length === 1
+      ? route.fulfill({ status: 502, json: { error: "Rate limited." } })
+      : route.fulfill({ json: { post: { ...post, reposted: true, reposts: 2 } } });
+  });
+  await page.getByRole("button", { name: "Repost", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("Could not repost. Rate limited.");
+  const repost = page.getByRole("button", { name: "Repost", exact: true });
+  await expect(repost).toHaveAttribute("aria-pressed", "false");
+  await expect(repost).toHaveText("1");
+  await page.getByRole("button", { name: "Retry", exact: true }).click();
+  const undo = page.getByRole("button", { name: "Undo repost", exact: true });
+  await expect(undo).toHaveAttribute("aria-pressed", "true");
+  await expect(undo).toHaveText("2");
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  expect(actions).toEqual(["repost", "repost"]);
+});
 test("cross-post partial failure retains the draft and only retries failed accounts", async ({
   page,
 }) => {
