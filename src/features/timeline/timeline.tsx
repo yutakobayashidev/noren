@@ -6,7 +6,9 @@ import { useEffect, useRef, useContext } from "react";
 import { LoaderCircle, Check, RefreshCw } from "lucide-react";
 import type { Account, FeedSource, SocialPost } from "../../domain/model";
 import { postIdentity } from "../../domain/model";
-import { useTimeline } from "./use-timeline";
+import { useTimeline, type TimelineGap } from "./use-timeline";
+import { PullToRefresh } from "./pull-to-refresh";
+import { NewPostsButton, useNewPosts } from "./new-posts";
 import { PostCard } from "./post-card";
 import { Button } from "../../components/ui/button";
 export type PostInteractions = {
@@ -18,6 +20,7 @@ export type PostInteractions = {
 };
 export function Timeline({
   sources,
+  pullEnabled,
   preferencesKey,
   accounts,
   source,
@@ -26,6 +29,7 @@ export function Timeline({
   ...interactions
 }: {
   sources?: Record<string, FeedSource>;
+  pullEnabled: boolean;
   preferencesKey: string;
   accounts: Account[];
   source: FeedSource;
@@ -45,10 +49,27 @@ export function Timeline({
     (post) => !filterEnabled || filter === "all" || (filter === "repost") === !!post.boostedBy,
   );
   const groups = groupedFeed(visible, enabled.includes("flare.link-groups"));
+  const timeline = useRef<HTMLDivElement>(null);
+  const newPosts = useNewPosts(timeline, feed.posts, feed.gaps);
+  function refreshLatest() {
+    void feed.loadLatest(newPosts.keepPosition);
+  }
+  // A gap row goes above the first displayed post at or after the post it was made for, so a
+  // filter that hides that post does not hide the row.
+  const order = new Map(feed.posts.map((post, index) => [postIdentity(post), index]));
+  const gapAbove = new Map<string, TimelineGap>();
+  for (const gap of feed.gaps) {
+    const start = order.get(gap.before);
+    const below =
+      start === undefined
+        ? undefined
+        : visible.find((post) => (order.get(postIdentity(post)) ?? -1) >= start);
+    if (below && !gapAbove.has(postIdentity(below))) gapAbove.set(postIdentity(below), gap);
+  }
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = sentinel.current;
-    if (!element || feed.loading || feed.errors.length || !feed.hasMore) return;
+    if (!element || feed.busy || feed.errors.length || !feed.hasMore) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) void feed.loadMore();
@@ -57,11 +78,29 @@ export function Timeline({
     );
     observer.observe(element);
     return () => observer.disconnect();
-  }, [feed.loading, feed.hasMore, feed.posts.length, feed.errors.length]);
+  }, [feed.busy, feed.hasMore, feed.posts.length, feed.errors.length]);
   return (
     <>
-      {feed.errors.map((error) => (
-        <div role="alert" className="feed-error" key={error.id}>
+      <PullToRefresh
+        enabled={pullEnabled}
+        loading={feed.busy}
+        refreshing={feed.refreshing}
+        onRefresh={refreshLatest}
+      />
+      <NewPostsButton count={newPosts.count} onClick={newPosts.showLatest} />
+      {[
+        ...feed.refreshErrors.map((error) => ({
+          ...error,
+          key: "refresh:" + error.id,
+          retry: refreshLatest,
+        })),
+        ...feed.errors.map((error) => ({
+          ...error,
+          key: "page:" + error.id,
+          retry: feed.loadMore,
+        })),
+      ].map((error) => (
+        <div role="alert" className="feed-error" key={error.key}>
           <div>
             <strong>{accounts.find((a) => a.id === error.id)?.displayName}</strong>
             <p>{error.message}</p>
@@ -69,8 +108,8 @@ export function Timeline({
           <Button
             variant="secondary"
             size="sm"
-            disabled={feed.loading}
-            onClick={() => void feed.loadMore()}
+            disabled={feed.busy}
+            onClick={() => void error.retry()}
           >
             <RefreshCw />
             {t("Retry")}
@@ -87,8 +126,8 @@ export function Timeline({
           </select>
         </label>
       )}
-      <div className={`timeline ${layout}`}>
-        {groups.map(([key, posts]) => {
+      <div ref={timeline} className={`timeline ${layout}`}>
+        {groups.flatMap(([key, posts]) => {
           const cards = posts.map((post) => (
             <PostCard
               key={postIdentity(post)}
@@ -99,19 +138,32 @@ export function Timeline({
               saved={interactions.saved.some((p) => postIdentity(p) === postIdentity(post))}
             />
           ));
-          return posts.length === 1 ? (
-            cards
-          ) : (
-            <details key={key} className="rounded-lg border p-3">
-              <summary>
-                {t("Shared link")} · {posts.length} · {key}
-              </summary>
-              {cards}
-            </details>
-          );
+          const item =
+            posts.length === 1 ? (
+              cards[0]
+            ) : (
+              <details key={key} className="rounded-lg border p-3">
+                <summary>
+                  {t("Shared link")} · {posts.length} · {key}
+                </summary>
+                {cards}
+              </details>
+            );
+          const below = posts.map(postIdentity).find((id) => gapAbove.has(id));
+          const gap = below && gapAbove.get(below);
+          if (!below || !gap) return [item];
+          return [
+            <GapRow
+              key={"gap:" + gap.id}
+              gap={gap}
+              disabled={feed.busy}
+              onLoad={() => void feed.loadGap(gap.id, () => newPosts.keepPosition(below))}
+            />,
+            item,
+          ];
         })}
       </div>
-      {feed.loading && (
+      {feed.loading && !feed.refreshing && (
         <div className="loading-state" role="status">
           <LoaderCircle className="animate-spin" size={22} />
           <span>{t("Loading posts…")}</span>
@@ -126,7 +178,7 @@ export function Timeline({
       )}
       {feed.hasMore && !feed.errors.length ? (
         <div ref={sentinel} className="load-more">
-          <Button variant="ghost" disabled={feed.loading} onClick={() => void feed.loadMore()}>
+          <Button variant="ghost" disabled={feed.busy} onClick={() => void feed.loadMore()}>
             {t("Load more")}
           </Button>
         </div>
@@ -134,5 +186,34 @@ export function Timeline({
         !!feed.posts.length && <p className="end-of-feed">{t("You’re all caught up")}</p>
       )}
     </>
+  );
+}
+// Flare's row for posts missing between a refresh and the posts below it.
+function GapRow({
+  gap,
+  disabled,
+  onLoad,
+}: {
+  gap: TimelineGap;
+  disabled: boolean;
+  onLoad: () => void;
+}) {
+  return (
+    <div className="timeline-gap">
+      <Button
+        variant="secondary"
+        className="h-auto min-h-10 w-full whitespace-normal"
+        disabled={disabled}
+        onClick={onLoad}
+      >
+        {t(
+          gap.loading
+            ? "Loading missing posts…"
+            : gap.failed
+              ? "Could not load posts. Tap to retry."
+              : "Load missing posts",
+        )}
+      </Button>
+    </div>
   );
 }

@@ -3,7 +3,7 @@ import { postActions, EnabledActions } from "../../plugins/post-actions";
 import { t } from "../../lib/i18n";
 import { useState, useContext, useEffect, useRef } from "react";
 import { Heart, Repeat2, MessageCircle, Bookmark, ExternalLink, LoaderCircle } from "lucide-react";
-import type { SocialPost } from "../../domain/model";
+import { postIdentity, type SocialPost } from "../../domain/model";
 import { PlatformIcon, Avatar } from "../../components/platform";
 import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../components/ui/dialog";
@@ -117,7 +117,7 @@ export function PostCard({
     }
   }
   return (
-    <article className={`post-card ${compact ? "compact" : ""}`}>
+    <article data-post-id={postIdentity(post)} className={`post-card ${compact ? "compact" : ""}`}>
       {post.boostedBy && (
         <div className="boost-label">
           <Repeat2 size={13} />
