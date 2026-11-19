@@ -31,5 +31,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: pnpm build
+      - name: Use Ubuntu archive mirror
+        run: echo 'https://archive.ubuntu.com/ubuntu/' | sudo tee /etc/apt/apt-mirrors.txt
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
