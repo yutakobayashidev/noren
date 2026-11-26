@@ -69,6 +69,8 @@ export function PostCard({
   compact?: boolean;
 }) {
   const enabledActions = useContext(EnabledActions);
+  // The actions and their pressed state stay visible; only the numbers are hidden.
+  const hideCounts = enabledActions.includes("flare.calm-counts");
   const [pluginResult, setPluginResult] = useState("");
   const [downloaded, setDownloaded] = useState(0);
   const [runningPlugin, setRunningPlugin] = useState("");
@@ -227,7 +229,7 @@ export function PostCard({
           <div className="post-actions">
             <button onClick={() => onThread(post)} aria-label={t("Open conversation")}>
               <MessageCircle size={17} />
-              <span>{post.replies || ""}</span>
+              {!hideCounts && <span>{post.replies || ""}</span>}
             </button>
             <button
               onClick={() => action("repost")}
@@ -243,7 +245,7 @@ export function PostCard({
               ) : (
                 <Repeat2 size={18} />
               )}
-              <span>{post.reposts || ""}</span>
+              {!hideCounts && <span>{post.reposts || ""}</span>}
             </button>
             <button
               onClick={() => action("like")}
@@ -259,7 +261,7 @@ export function PostCard({
               ) : (
                 <Heart size={17} fill={post.liked ? "currentColor" : "none"} />
               )}
-              <span>{post.likes || ""}</span>
+              {!hideCounts && <span>{post.likes || ""}</span>}
             </button>
             <button
               onClick={() => onSave(post)}
