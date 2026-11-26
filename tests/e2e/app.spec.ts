@@ -599,3 +599,80 @@ test("pulling a recommended feed puts fresh recommendations on top without a gap
   await expect(cards.nth(2)).toContainText("Second pick");
   await expect(page.locator(".timeline-gap")).toHaveCount(0);
 });
+test("calm mode hides reaction counts but keeps actions and survives a reload", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await fixture(page);
+  await page.route("**/api/action", (route) => {
+    const { action } = route.request().postDataJSON();
+    route.fulfill({
+      json: {
+        post:
+          action === "like"
+            ? { ...post, liked: true, likes: 4 }
+            : { ...post, liked: true, likes: 4, reposted: true, reposts: 2 },
+      },
+    });
+  });
+  const card = page.locator("article.post-card").first();
+  const actions = card.locator(".post-actions");
+  await expect(card.getByRole("button", { name: "Like", exact: true })).toHaveText("3");
+  await expect(card.getByRole("button", { name: "Repost", exact: true })).toHaveText("1");
+  await expect(card.getByRole("button", { name: "Open conversation" })).toHaveText("2");
+
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const toggle = page.getByRole("switch", { name: /Hide reaction counts/ });
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("Escape");
+
+  await expect(card.getByRole("button", { name: "Like", exact: true })).toHaveText("");
+  await expect(card.getByRole("button", { name: "Repost", exact: true })).toHaveText("");
+  await expect(card.getByRole("button", { name: "Open conversation" })).toHaveText("");
+
+  await card.getByRole("button", { name: "Like", exact: true }).click();
+  const unlike = card.getByRole("button", { name: "Unlike", exact: true });
+  await expect(unlike).toHaveAttribute("aria-pressed", "true");
+  await expect(unlike).toHaveText("");
+  await card.getByRole("button", { name: "Repost", exact: true }).click();
+  const undoRepost = card.getByRole("button", { name: "Undo repost", exact: true });
+  await expect(undoRepost).toHaveAttribute("aria-pressed", "true");
+  await expect(undoRepost).toHaveText("");
+  await card.getByRole("button", { name: "Save post", exact: true }).click();
+  await expect(card.getByRole("button", { name: "Unsave post", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(actions).not.toContainText(/\d/);
+
+  await card.getByRole("button", { name: "Open conversation" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("A thoughtful reply.")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Like", exact: true })).toHaveCount(2);
+  for (const actionBar of await dialog.locator(".post-actions").all())
+    await expect(actionBar).not.toContainText(/\d/);
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Saved", exact: true }).first().click();
+  const savedCard = page.locator("article.post-card").first();
+  await expect(savedCard.getByRole("button", { name: "Unlike", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(savedCard.locator(".post-actions")).not.toContainText(/\d/);
+
+  await page.reload();
+  await expect(
+    page.locator("article.post-card").first().locator(".post-actions"),
+  ).not.toContainText(/\d/);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.locator("article.post-card").first().getByRole("button", { name: "Unlike", exact: true }),
+  ).toHaveText("4");
+});

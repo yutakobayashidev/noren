@@ -154,6 +154,7 @@ function Workspace({ session }: { session: Session }) {
     `${storageKey}:layout`,
     "grid",
   );
+  const [hideCounts, setHideCounts] = useStored(`${storageKey}:hide-reaction-counts`, false);
   useEffect(() => {
     const handler = () => {
       setRoute(readRoute());
@@ -205,6 +206,7 @@ function Workspace({ session }: { session: Session }) {
   }
   const interactions: PostInteractions = {
     saved,
+    hideCounts,
     onSave: (post) =>
       setSaved((old) =>
         old.some((p) => postIdentity(p) === postIdentity(post))
@@ -743,6 +745,22 @@ function Workspace({ session }: { session: Session }) {
                         </button>
                       ))}
                     </div>
+                  </section>
+                  <section>
+                    <h2 className="settings-label">{t("Reading")}</h2>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={hideCounts}
+                      className="settings-switch"
+                      onClick={() => setHideCounts(!hideCounts)}
+                    >
+                      <span>
+                        <strong>{t("Hide reaction counts")}</strong>
+                        <small>{t("Read posts without like, repost and reply numbers.")}</small>
+                      </span>
+                      <span className="switch-track" aria-hidden="true" />
+                    </button>
                   </section>
                   <section>
                     <h2 className="settings-label">{t("Accounts")}</h2>

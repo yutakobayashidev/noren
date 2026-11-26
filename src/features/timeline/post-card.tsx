@@ -58,6 +58,7 @@ export function PostCard({
   saved,
   onSave,
   compact = false,
+  hideCounts = false,
 }: {
   post: SocialPost;
   onReply: (post: SocialPost) => void;
@@ -67,6 +68,8 @@ export function PostCard({
   saved: boolean;
   onSave: (post: SocialPost) => void;
   compact?: boolean;
+  /** Calm mode: hide reaction counts while keeping the actions and their pressed state. */
+  hideCounts?: boolean;
 }) {
   const enabledActions = useContext(EnabledActions);
   const [pluginResult, setPluginResult] = useState("");
@@ -227,7 +230,7 @@ export function PostCard({
           <div className="post-actions">
             <button onClick={() => onThread(post)} aria-label={t("Open conversation")}>
               <MessageCircle size={17} />
-              <span>{post.replies || ""}</span>
+              {!hideCounts && <span>{post.replies || ""}</span>}
             </button>
             <button
               onClick={() => action("repost")}
@@ -243,7 +246,7 @@ export function PostCard({
               ) : (
                 <Repeat2 size={18} />
               )}
-              <span>{post.reposts || ""}</span>
+              {!hideCounts && <span>{post.reposts || ""}</span>}
             </button>
             <button
               onClick={() => action("like")}
@@ -259,7 +262,7 @@ export function PostCard({
               ) : (
                 <Heart size={17} fill={post.liked ? "currentColor" : "none"} />
               )}
-              <span>{post.likes || ""}</span>
+              {!hideCounts && <span>{post.likes || ""}</span>}
             </button>
             <button
               onClick={() => onSave(post)}
