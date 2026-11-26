@@ -58,7 +58,6 @@ export function PostCard({
   saved,
   onSave,
   compact = false,
-  hideCounts = false,
 }: {
   post: SocialPost;
   onReply: (post: SocialPost) => void;
@@ -68,10 +67,10 @@ export function PostCard({
   saved: boolean;
   onSave: (post: SocialPost) => void;
   compact?: boolean;
-  /** Calm mode: hide reaction counts while keeping the actions and their pressed state. */
-  hideCounts?: boolean;
 }) {
   const enabledActions = useContext(EnabledActions);
+  // The actions and their pressed state stay visible; only the numbers are hidden.
+  const hideCounts = enabledActions.includes("flare.calm-counts");
   const [pluginResult, setPluginResult] = useState("");
   const [downloaded, setDownloaded] = useState(0);
   const [runningPlugin, setRunningPlugin] = useState("");

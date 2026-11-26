@@ -599,7 +599,7 @@ test("pulling a recommended feed puts fresh recommendations on top without a gap
   await expect(cards.nth(2)).toContainText("Second pick");
   await expect(page.locator(".timeline-gap")).toHaveCount(0);
 });
-test("calm mode hides reaction counts but keeps actions and survives a reload", async ({
+test("the hide reaction counts plugin keeps actions usable and survives a reload", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -621,12 +621,7 @@ test("calm mode hides reaction counts but keeps actions and survives a reload", 
   await expect(card.getByRole("button", { name: "Repost", exact: true })).toHaveText("1");
   await expect(card.getByRole("button", { name: "Open conversation" })).toHaveText("2");
 
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  const toggle = page.getByRole("switch", { name: /Hide reaction counts/ });
-  await expect(toggle).toHaveAttribute("aria-checked", "false");
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-checked", "true");
-  await page.keyboard.press("Escape");
+  await enablePlugins(page, ["Hide reaction counts"]);
 
   await expect(card.getByRole("button", { name: "Like", exact: true })).toHaveText("");
   await expect(card.getByRole("button", { name: "Repost", exact: true })).toHaveText("");
@@ -667,12 +662,13 @@ test("calm mode hides reaction counts but keeps actions and survives a reload", 
   await expect(
     page.locator("article.post-card").first().locator(".post-actions"),
   ).not.toContainText(/\d/);
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(toggle).toHaveAttribute("aria-checked", "true");
-  await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-checked", "false");
-  await page.keyboard.press("Escape");
-  await expect(
-    page.locator("article.post-card").first().getByRole("button", { name: "Unlike", exact: true }),
-  ).toHaveText("4");
+  await page.goto("/#page=plugins");
+  const plugin = page
+    .locator("article")
+    .filter({ has: page.getByRole("heading", { name: "Hide reaction counts", exact: true }) });
+  await plugin.getByRole("button", { name: "Disable plugin" }).click();
+  await page.goto("/");
+  const restored = page.locator("article.post-card").first();
+  await expect(restored.getByRole("button", { name: "Open conversation" })).toHaveText("2");
+  await expect(restored.locator(".post-actions")).toContainText(/\d/);
 });

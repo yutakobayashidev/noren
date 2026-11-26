@@ -17,7 +17,6 @@ export type PostInteractions = {
   onProfile: (p: SocialPost) => void;
   saved: SocialPost[];
   onSave: (p: SocialPost) => void;
-  hideCounts?: boolean;
 };
 export function Timeline({
   sources,

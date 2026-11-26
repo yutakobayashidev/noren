@@ -11,6 +11,7 @@ const contributions = [
   ["flare.speech", "Read aloud", "Post action"],
   ["flare.feed-filter", "Filter reposts", "Timeline"],
   ["flare.link-groups", "Group shared links", "Timeline"],
+  ["flare.calm-counts", "Hide reaction counts", "Timeline"],
 ] as const;
 export const readingPlugins = contributions.map(([id, name, category]) => ({
   id,

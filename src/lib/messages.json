@@ -145,12 +145,7 @@
   ],
   "Timelines": ["タイムライン一覧", "时间线"],
   "Mixed": ["統合", "综合"],
-  "Reading": ["読み方", "阅读"],
   "Hide reaction counts": ["投稿の反応数を隠す", "隐藏帖子的互动数"],
-  "Read posts without like, repost and reply numbers.": [
-    "いいね・リポスト・返信の数を表示せずに投稿を読めます。",
-    "阅读帖子时不显示点赞、转发和回复数。"
-  ],
   "Timeline layout": ["タイムラインのレイアウト", "时间线布局"],
   "Grid view": ["グリッド表示", "网格视图"],
   "List view": ["リスト表示", "列表视图"],
